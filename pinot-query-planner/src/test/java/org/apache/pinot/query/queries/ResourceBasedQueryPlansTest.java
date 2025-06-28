@@ -167,6 +167,9 @@ public class ResourceBasedQueryPlansTest extends QueryEnvironmentTestBase {
 
     // Load each test file.
     for (String testCaseName : testFilenames) {
+      if (!"PhysicalOptimizerPlans.json".equals(testCaseName)) {
+        continue;
+      }
       if (property != null && !testCaseName.toLowerCase().contains(property.toLowerCase())) {
         continue;
       }

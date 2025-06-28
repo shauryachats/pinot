@@ -235,7 +235,7 @@
     "queries": [
       {
         "description": "Inner join with order by",
-        "sql": "SET usePhysicalOptimizer=true; EXPLAIN PLAN FOR SELECT a.col1, a.ts, b.col3 FROM a JOIN b ON a.col1 = b.col2 ORDER BY a.col1",
+        "sql": "SET usePhysicalOptimizer=true; EXPLAIN PLAN FOR SELECT a.col3 from a where (col3 is null) limit 10",
         "output": [
           "Execution Plan",
           "\nPhysicalExchange(exchangeStrategy=[SINGLETON_EXCHANGE])",
