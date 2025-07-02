@@ -49,6 +49,8 @@ import {Resizable} from "re-resizable";
 import { useHistory, useLocation } from 'react-router';
 import sqlFormatter from '@sqltools/formatter';
 import { VisualizeQueryStageStats } from '../components/Query/VisualizeQueryStageStats';
+import TimeseriesQueryModal from '../components/Query/TimeseriesQueryModal';
+
 
 enum ResultViewType {
   TABULAR = 'tabular',
@@ -268,6 +270,11 @@ const QueryPage = () => {
 
   const [copyMsg, showCopyMsg] = React.useState(false);
 
+  // Timeseries Query Modal State
+  const [timeseriesModalOpen, setTimeseriesModalOpen] = useState(false);
+  const [queryType, setQueryType] = useState<'regular' | 'timeseries'>('regular');
+  const location = useLocation();
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked({ ...checked, [event.target.name]: event.target.checked });
   };
@@ -298,7 +305,7 @@ const QueryPage = () => {
   useEffect(() => {
     handleQueryInterfaceKeyDownRef.current = handleQueryInterfaceKeyDown;
   }, [handleQueryInterfaceKeyDown]);
-  
+
 
   const handleComment = (cm: NativeCodeMirror.Editor) => {
     const selections = cm.listSelections();
@@ -454,6 +461,30 @@ const QueryPage = () => {
     setFetching(false);
   };
 
+  // Timeseries Query Modal Handlers
+  const handleTimeseriesModalOpen = () => {
+    setTimeseriesModalOpen(true);
+  };
+
+  const handleTimeseriesModalClose = () => {
+    setTimeseriesModalOpen(false);
+  };
+
+  const handleTimeseriesQueryExecute = async (query: string, config: any) => {
+    setTimeseriesModalOpen(false);
+
+    // For timeseries queries, we don't need to update the main SQL interface
+    // since they use a different API endpoint. The modal handles the execution
+    // and displays the results directly.
+
+    // We could optionally show a success message or update the UI
+    console.log('Timeseries query executed:', { query, config });
+  };
+
+  const handleQueryTypeChange = (type: 'regular' | 'timeseries') => {
+    setQueryType(type);
+  };
+
   useEffect(() => {
     fetchData();
     if(inputQuery){
@@ -530,6 +561,8 @@ const QueryPage = () => {
           tableSchema={tableSchema}
           selectedTable={selectedTable}
           queryLoader={queryLoader}
+          queryType="regular"
+          onQueryTypeChange={handleQueryTypeChange}
         />
       </Grid>
       <Grid
@@ -544,34 +577,34 @@ const QueryPage = () => {
       >
         <Grid container>
           <Grid item xs={12} className={classes.rightPanel}>
-            <Resizable
-                defaultSize={{
-                  width: '100%',
-                  height: 148,
+          <Resizable
+              defaultSize={{
+                width: '100%',
+                height: 148,
+              }}
+              minHeight={148}
+              maxWidth={'100%'}
+              maxHeight={'50vh'}
+              enable={{bottom: true}}>
+            <div className={classes.sqlDiv}>
+              <TableToolbar name="SQL Editor" showSearchBox={false} showTooltip={true} tooltipText={sqlEditorTooltip} />
+              <CodeMirror
+                options={{
+                  ...sqloptions,
+                  hintOptions: {
+                    hint: handleSqlHints,
+                  },
                 }}
-                minHeight={148}
-                maxWidth={'100%'}
-                maxHeight={'50vh'}
-                enable={{bottom: true}}>
-              <div className={classes.sqlDiv}>
-                <TableToolbar name="SQL Editor" showSearchBox={false} showTooltip={true} tooltipText={sqlEditorTooltip} />
-                <CodeMirror
-                  options={{
-                    ...sqloptions,
-                    hintOptions: {
-                      hint: handleSqlHints,
-                    },
-                  }}
-                  value={inputQuery}
-                  onChange={handleOutputDataChange}
-                  // Ensures the latest function is always called, preventing stale state issues due to closures.
-                  // Directly passing handleQueryInterfaceKeyDown may result in outdated state references.
-                  onKeyDown={(editor, event) => handleQueryInterfaceKeyDownRef.current(editor, event)} 
-                  className={classes.codeMirror}
-                  autoCursor={false}
-                />
-              </div>
-            </Resizable>
+                value={inputQuery}
+                onChange={handleOutputDataChange}
+                // Ensures the latest function is always called, preventing stale state issues due to closures.
+                // Directly passing handleQueryInterfaceKeyDown may result in outdated state references.
+                onKeyDown={(editor, event) => handleQueryInterfaceKeyDownRef.current(editor, event)}
+                className={classes.codeMirror}
+                autoCursor={false}
+              />
+            </div>
+          </Resizable>
 
             <Grid container className={classes.checkBox}>
               <Grid item xs={2}>
@@ -601,7 +634,7 @@ const QueryPage = () => {
                 </FormControl>
               </Grid>
 
-              <Grid item xs={2} className={classes.formatSQLBtn}>
+              <Grid item xs={4} className={classes.formatSQLBtn}>
                 <Button
                     variant="contained"
                     color="primary"
@@ -646,13 +679,13 @@ const QueryPage = () => {
                                    </Alert>
                   )
                 }
-        
+
                 {/* Sql result errors */}
                 {resultError && resultError.length > 0 && (
                     <>
-                      <Alert 
-                        className={classes.sqlError} 
-                        severity="error" 
+                      <Alert
+                        className={classes.sqlError}
+                        severity="error"
                         action={
 
                           <FormControlLabel
@@ -717,7 +750,7 @@ const QueryPage = () => {
                     </>
                   )
                 }
-        
+
                 <Grid item xs style={{ backgroundColor: 'white' }}>
                   {resultData.columns.length ? (
                     <>
@@ -781,7 +814,7 @@ const QueryPage = () => {
                           showSearchBox={true}
                           inAccordionFormat={true}
                         />
-                      )} 
+                      )}
                       {resultViewType === ResultViewType.JSON && (
                         <SimpleAccordion
                           headerTitle="Query Result (JSON Format)"
@@ -811,6 +844,16 @@ const QueryPage = () => {
           </Grid>
         </Grid>
       </Grid>
+
+      {/* Timeseries Query Modal */}
+      <TimeseriesQueryModal
+        open={timeseriesModalOpen}
+        handleClose={handleTimeseriesModalClose}
+        handleExecute={handleTimeseriesQueryExecute}
+        tableList={tableList}
+        tableSchema={tableSchema}
+        selectedTable={selectedTable}
+      />
     </>
   );
 };

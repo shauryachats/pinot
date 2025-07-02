@@ -87,7 +87,7 @@ export const getSchema = (name: string): Promise<AxiosResponse<OperationResponse
 
 export const putSchema = (name: string, params: string, reload?: boolean): Promise<AxiosResponse<OperationResponse>> => {
   let queryParams = {};
-  
+
   if(reload) {
     queryParams["reload"] = reload;
   }
@@ -198,10 +198,10 @@ export const executeTask = (data): Promise<AxiosResponse<OperationResponse>> =>
 
 export const getJobDetail = (tableName: string, taskType: string): Promise<AxiosResponse<OperationResponse>> =>
   baseApi.get(`/tasks/scheduler/jobDetails?tableName=${tableName}&taskType=${taskType}`, { headers: { ...headers, Accept: 'application/json' } });
-  
+
 export const getMinionMeta = (tableName: string, taskType: string): Promise<AxiosResponse<OperationResponse>> =>
   baseApi.get(`/tasks/${taskType}/${tableName}/metadata`, { headers: { ...headers, Accept: 'application/json' } });
-  
+
 export const getTasks = (tableName: string, taskType: string): Promise<AxiosResponse<OperationResponse>> =>
   baseApi.get(`/tasks/${taskType}/${tableName}/state`, { headers: { ...headers, Accept: 'application/json' } });
 
@@ -234,6 +234,9 @@ export const getTableSchema = (name: string): Promise<AxiosResponse<TableSchema>
 
 export const getQueryResult = (params: Object): Promise<AxiosResponse<SQLResult>> =>
   transformApi.post(`/sql`, params, {headers});
+
+export const getTimeSeriesQueryResult = (params: Object): Promise<AxiosResponse<any>> =>
+  transformApi.post(`/timeseries/api/v1/query_range`, params, {headers});
 
 export const getClusterInfo = (): Promise<AxiosResponse<ClusterName>> =>
   baseApi.get('/cluster/info');
