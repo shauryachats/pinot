@@ -22,9 +22,12 @@ import * as React from 'react';
 import { createStyles, Theme, makeStyles } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import { Grid } from '@material-ui/core';
+import { Grid, List, ListItem, ListItemText, ListItemIcon, Typography, Divider } from '@material-ui/core';
 import { TableData } from 'Models';
 import CustomizedTables from '../Table';
+import QueryIcon from '@material-ui/icons/QueryBuilder';
+import TimelineIcon from '@material-ui/icons/Timeline';
+import { useHistory, useLocation } from 'react-router';
 
 const drawerWidth = 300;
 
@@ -78,10 +81,13 @@ type Props = {
   tableSchema: TableData;
   selectedTable: string;
   queryLoader: boolean;
+  queryType?: 'regular' | 'timeseries';
 };
 
 const Sidebar = ({ tableList, fetchSQLData, tableSchema, selectedTable, queryLoader }: Props) => {
   const classes = useStyles();
+  const history = useHistory();
+  const location = useLocation();
 
   return (
     <>
@@ -96,6 +102,36 @@ const Sidebar = ({ tableList, fetchSQLData, tableSchema, selectedTable, queryLoa
       >
         <div className={classes.drawerContainer}>
           <Grid item xs className={classes.leftPanel}>
+            <Typography variant="h6" style={{ marginBottom: '4px', color: '#3B454E' }}>
+              Query Type
+            </Typography>
+            <List component="nav" style={{ marginBottom: '0px' }}>
+              <ListItem
+                button
+                selected={location.pathname === '/query'}
+                onClick={() => history.push('/query')}
+                className={classes.itemContainer}
+              >
+                <ListItemIcon>
+                  <QueryIcon color={location.pathname === '/query' ? 'primary' : 'action'} />
+                </ListItemIcon>
+                <ListItemText primary="Regular Query" />
+              </ListItem>
+              <ListItem
+                button
+                selected={location.pathname === '/query/timeseries'}
+                onClick={() => history.push('/query/timeseries')}
+                className={classes.itemContainer}
+              >
+                <ListItemIcon>
+                  <TimelineIcon color={location.pathname === '/query/timeseries' ? 'primary' : 'action'} />
+                </ListItemIcon>
+                <ListItemText primary="Timeseries Query" />
+              </ListItem>
+            </List>
+
+            <Divider style={{ marginBottom: '24px' }} />
+
             <CustomizedTables
               title="Tables"
               data={tableList}
@@ -105,7 +141,7 @@ const Sidebar = ({ tableList, fetchSQLData, tableSchema, selectedTable, queryLoa
               inAccordionFormat
             />
 
-            {!queryLoader && tableSchema.records.length ? (
+            {!queryLoader && tableSchema.records.length && location.pathname === '/query' ? (
               <CustomizedTables
                 title={`${selectedTable} schema`}
                 data={tableSchema}
