@@ -27,30 +27,32 @@ module.exports = (env, argv) => {
 
   return {
     mode: !devMode ? 'production' : 'development',
-    node: {
-      fs: 'empty'
-    },
-
-    // Enable sourcemaps for debugging webpack's output.
+    // node: {
+    //   fs: 'empty'
+    // }, // Removed for Webpack 5
     devtool: 'source-map',
     resolve: {
-      // Add '.ts' and '.tsx' as resolvable extensions.
       extensions: ['.ts', '.tsx', '.js'],
       modules: ['./app', 'node_modules'],
+      fallback: {
+        fs: false,
+        path: require.resolve('path-browserify'),
+        assert: require.resolve('assert'),
+      },
     },
     entry: './app/index.tsx',
     output: {
       path: path.resolve(__dirname, 'dist/webapp'),
-      filename: './js/main.js'
+      filename: 'js/main.js', // Remove './' per Webpack 5
     },
     devServer: {
       compress: true,
       hot: true,
       proxy: [
         {
-            context: "/",
-            target: "http://localhost:9000",
-            changeOrigin: true,
+          context: '/',
+          target: 'http://localhost:9000',
+          changeOrigin: true,
         },
       ],
     },
@@ -65,7 +67,6 @@ module.exports = (env, argv) => {
             },
           ],
         },
-        // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
         {
           enforce: 'pre',
           test: /\.js$/,
@@ -80,22 +81,11 @@ module.exports = (env, argv) => {
           use: ['style-loader', 'css-loader'],
         },
         {
-          // Match woff2 in addition to patterns like .woff?v=1.1.1.
           test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
-          use: {
-            loader: 'url-loader',
-            options: {
-              // Limit at 50k. Above that it emits separate files
-              limit: 50000,
-
-              // url-loader sets mimetype if it's passed.
-              // Without this it derives it from the file extension
-              mimetype: 'application/font-woff',
-
-              // Output below fonts directory
-              name: './fonts/[name].[ext]',
-            },
-          },
+          type: 'asset/resource',
+          generator: {
+            filename: 'fonts/[name][ext][query]'
+          }
         },
         {
           test: /\.csv$/,
@@ -113,8 +103,8 @@ module.exports = (env, argv) => {
       new CopyWebpackPlugin([
         {
           from: path.join(__dirname, './favicon.ico'),
-          to: 'images/favicon.ico'
-        }
+          to: 'images/favicon.ico',
+        },
       ]),
       new HtmlWebPackPlugin({
         template: './app/index.html',
