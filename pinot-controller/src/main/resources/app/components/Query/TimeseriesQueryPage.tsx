@@ -41,6 +41,7 @@ import { useHistory, useLocation } from 'react-router';
 import TableToolbar from '../TableToolbar';
 import { Resizable } from 're-resizable';
 import SimpleAccordion from '../SimpleAccordion';
+import TimeseriesChart from './TimeseriesChart';
 
 const useStyles = makeStyles((theme) => ({
   rightPanel: {},
@@ -153,6 +154,7 @@ const TimeseriesQueryPage = () => {
   const [error, setError] = useState<string>('');
   const [shouldAutoExecute, setShouldAutoExecute] = useState<boolean>(false);
   const [copyMsg, showCopyMsg] = React.useState(false);
+  const [showChart, setShowChart] = useState<boolean>(true);
 
   // Update config when URL parameters change
   useEffect(() => {
@@ -377,7 +379,41 @@ const TimeseriesQueryPage = () => {
           </Alert>
         )}
 
-        {rawOutput && (
+        {/* Timeseries Chart Visualization */}
+        {rawData && (
+          <Grid item xs={12} style={{ marginBottom: '20px' }}>
+            <SimpleAccordion
+              headerTitle="Query Results"
+              showSearchBox={false}
+              additionalControls={
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setShowChart(!showChart)}
+                  style={{ marginRight: '10px' }}
+                >
+                  {showChart ? 'Show JSON' : 'Show Chart'}
+                </Button>
+              }
+            >
+              {showChart ? (
+                <TimeseriesChart
+                  data={rawData}
+                  isLoading={isLoading}
+                />
+              ) : (
+                <CodeMirror
+                  options={jsonoptions}
+                  value={rawOutput}
+                  className={classes.queryOutput}
+                  autoCursor={false}
+                />
+              )}
+            </SimpleAccordion>
+          </Grid>
+        )}
+
+        {rawOutput && !rawData && (
           <Grid item xs style={{ backgroundColor: 'white' }}>
             <Grid container className={classes.actionBtns}>
               <Button

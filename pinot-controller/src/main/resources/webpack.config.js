@@ -37,7 +37,6 @@ module.exports = (env, argv) => {
       fallback: {
         fs: false,
         path: require.resolve('path-browserify'),
-        assert: require.resolve('assert'),
       },
     },
     entry: './app/index.tsx',
@@ -82,10 +81,10 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
-          type: 'asset/resource',
-          generator: {
-            filename: 'fonts/[name][ext][query]'
-          }
+          loader: 'file-loader',
+          options: {
+            name: 'fonts/[name].[ext]',
+          },
         },
         {
           test: /\.csv$/,
