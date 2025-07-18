@@ -90,6 +90,7 @@ import org.apache.pinot.core.query.reduce.BaseGapfillProcessor;
 import org.apache.pinot.core.query.reduce.GapfillProcessorFactory;
 import org.apache.pinot.core.query.request.context.QueryContext;
 import org.apache.pinot.core.query.request.context.utils.QueryContextConverterUtils;
+import org.apache.pinot.core.routing.RoutingManager;
 import org.apache.pinot.core.routing.TimeBoundaryInfo;
 import org.apache.pinot.core.transport.ServerInstance;
 import org.apache.pinot.core.transport.TableRouteInfo;
@@ -168,7 +169,7 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
   protected LogicalTableRouteProvider _logicalTableRouteProvider;
 
   public BaseSingleStageBrokerRequestHandler(PinotConfiguration config, String brokerId,
-      BrokerRoutingManager routingManager, AccessControlFactory accessControlFactory,
+      RoutingManager routingManager, AccessControlFactory accessControlFactory,
       QueryQuotaManager queryQuotaManager, TableCache tableCache) {
     super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache);
     _disableGroovy = _config.getProperty(Broker.DISABLE_GROOVY, Broker.DEFAULT_DISABLE_GROOVY);
@@ -1935,11 +1936,12 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
       // Use query-level timeout if exists
       queryTimeoutMs = queryLevelTimeoutMs;
     } else {
-      Long tableLevelTimeoutMs = _routingManager.getQueryTimeoutMs(tableNameWithType);
-      if (tableLevelTimeoutMs != null) {
-        // Use table-level timeout if exists
-        queryTimeoutMs = tableLevelTimeoutMs;
-      } else if (logicalTableQueryTimeout != null) {
+//      Long tableLevelTimeoutMs = _routingManager.getQueryTimeoutMs(tableNameWithType);
+//      if (tableLevelTimeoutMs != null) {
+//        // Use table-level timeout if exists
+//        queryTimeoutMs = tableLevelTimeoutMs;
+//      } else
+        if (logicalTableQueryTimeout != null) {
         queryTimeoutMs = logicalTableQueryTimeout;
       } else {
         // Use instance-level timeout

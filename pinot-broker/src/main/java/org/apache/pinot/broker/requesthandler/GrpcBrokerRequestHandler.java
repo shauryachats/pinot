@@ -38,6 +38,7 @@ import org.apache.pinot.common.response.broker.BrokerResponseNative;
 import org.apache.pinot.common.utils.grpc.ServerGrpcQueryClient;
 import org.apache.pinot.common.utils.grpc.ServerGrpcRequestBuilder;
 import org.apache.pinot.core.query.reduce.StreamingReduceService;
+import org.apache.pinot.core.routing.RoutingManager;
 import org.apache.pinot.core.routing.ServerRouteInfo;
 import org.apache.pinot.core.transport.ServerInstance;
 import org.apache.pinot.core.transport.ServerRoutingInstance;
@@ -62,7 +63,7 @@ public class GrpcBrokerRequestHandler extends BaseSingleStageBrokerRequestHandle
   private final FailureDetector _failureDetector;
 
   // TODO: Support TLS
-  public GrpcBrokerRequestHandler(PinotConfiguration config, String brokerId, BrokerRoutingManager routingManager,
+  public GrpcBrokerRequestHandler(PinotConfiguration config, String brokerId, RoutingManager routingManager,
       AccessControlFactory accessControlFactory, QueryQuotaManager queryQuotaManager, TableCache tableCache,
       FailureDetector failureDetector) {
     super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache);

@@ -39,6 +39,7 @@ import org.apache.pinot.common.response.broker.BrokerResponseNative;
 import org.apache.pinot.common.response.broker.QueryProcessingException;
 import org.apache.pinot.common.utils.config.QueryOptionsUtils;
 import org.apache.pinot.core.query.reduce.BrokerReduceService;
+import org.apache.pinot.core.routing.RoutingManager;
 import org.apache.pinot.core.transport.AsyncQueryResponse;
 import org.apache.pinot.core.transport.QueryResponse;
 import org.apache.pinot.core.transport.QueryRouter;
@@ -69,7 +70,7 @@ public class SingleConnectionBrokerRequestHandler extends BaseSingleStageBrokerR
   private final FailureDetector _failureDetector;
 
   public SingleConnectionBrokerRequestHandler(PinotConfiguration config, String brokerId,
-      BrokerRoutingManager routingManager, AccessControlFactory accessControlFactory,
+      RoutingManager routingManager, AccessControlFactory accessControlFactory,
       QueryQuotaManager queryQuotaManager, TableCache tableCache, NettyConfig nettyConfig, TlsConfig tlsConfig,
       ServerRoutingStatsManager serverRoutingStatsManager, FailureDetector failureDetector) {
     super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache);

@@ -53,6 +53,7 @@ import org.apache.pinot.common.response.broker.QueryProcessingException;
 import org.apache.pinot.common.utils.request.RequestUtils;
 import org.apache.pinot.core.auth.Actions;
 import org.apache.pinot.core.auth.TargetType;
+import org.apache.pinot.core.routing.RoutingManager;
 import org.apache.pinot.spi.auth.AuthorizationResult;
 import org.apache.pinot.spi.auth.TableAuthorizationResult;
 import org.apache.pinot.spi.auth.broker.RequesterIdentity;
@@ -76,7 +77,7 @@ public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(BaseBrokerRequestHandler.class);
   protected final PinotConfiguration _config;
   protected final String _brokerId;
-  protected final BrokerRoutingManager _routingManager;
+  protected final RoutingManager _routingManager;
   protected final AccessControlFactory _accessControlFactory;
   protected final QueryQuotaManager _queryQuotaManager;
   protected final TableCache _tableCache;
@@ -98,7 +99,7 @@ public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
    */
   protected final Map<Long, String> _clientQueryIds;
 
-  public BaseBrokerRequestHandler(PinotConfiguration config, String brokerId, BrokerRoutingManager routingManager,
+  public BaseBrokerRequestHandler(PinotConfiguration config, String brokerId, RoutingManager routingManager,
       AccessControlFactory accessControlFactory, QueryQuotaManager queryQuotaManager, TableCache tableCache) {
     _config = config;
     _brokerId = brokerId;
