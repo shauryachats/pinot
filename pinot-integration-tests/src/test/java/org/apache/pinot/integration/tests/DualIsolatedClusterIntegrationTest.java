@@ -146,6 +146,9 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     startZookeeper(_cluster1);
     startZookeeper(_cluster2);
 
+    startControllerInit(_cluster1, CLUSTER_1_CONFIG);
+    startControllerInit(_cluster2, CLUSTER_2_CONFIG);
+
     // Start clusters
     startCluster(_cluster1, _cluster2, CLUSTER_1_CONFIG);
     startCluster(_cluster2, _cluster1, CLUSTER_2_CONFIG);
@@ -175,6 +178,11 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     cluster.zkUrl = cluster.zkInstance.getZkUrl();
   }
 
+  private void startControllerInit(ClusterComponents cluster, ClusterConfig config) throws Exception {
+    cluster.controllerPort = findAvailablePort(config.basePort);
+    startController(cluster, config);
+  }
+
   private void startCluster(ClusterComponents cluster, ClusterComponents secondaryCluster, ClusterConfig config) throws Exception {
     LOGGER.info("Starting cluster: {}", config.name);
 
@@ -183,8 +191,8 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
 //    cluster.zkUrl = cluster.zkInstance.getZkUrl();
 
     // Start Controller
-    cluster.controllerPort = findAvailablePort(config.basePort);
-    startController(cluster, config);
+//    cluster.controllerPort = findAvailablePort(config.basePort);
+//    startController(cluster, config);
 
     // Start Broker
     cluster.brokerPort = findAvailablePort(cluster.controllerPort + 1000);
@@ -221,6 +229,9 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     if (config.name.equalsIgnoreCase("DualIsolatedCluster2")) {
       brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPR_SERVER, secondaryCluster.zkUrl);
       brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME, "DualIsolatedCluster1");
+    } else {
+      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPR_SERVER, secondaryCluster.zkUrl);
+      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME, "DualIsolatedCluster2");
     }
     brokerConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config.name);
     brokerConfig.setProperty(Broker.CONFIG_OF_BROKER_HOSTNAME, ControllerTest.LOCAL_HOST);
@@ -354,18 +365,18 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
 
   @Test
   public void testDataLoading() throws Exception {
-    ZkClient zkClient = new ZkClient("localhost:2191", 30000, 30000, new ZNRecordSerializer());
-    ZkPathCollector collector = new ZkPathCollector();
-    ZNRecord ideal = zkClient.readData("/DualIsolatedCluster1/IDEALSTATES/brokerResource");
+//    ZkClient zkClient = new ZkClient("localhost:2191", 30000, 30000, new ZNRecordSerializer());
+//    ZkPathCollector collector = new ZkPathCollector();
+//    ZNRecord ideal = zkClient.readData("/DualIsolatedCluster1/IDEALSTATES/brokerResource");
 
     setupFederationTable();
     cleanSegmentDirs();
 
-
-    List<String> zkPaths = collector.getAllPaths(zkClient, "/");
-
-    ZNRecord idealAfter = zkClient.readData("/DualIsolatedCluster1/IDEALSTATES/brokerResource");
-    Map<String, String> partitionMap = ideal.getMapField("brokerResource");
+//
+//    List<String> zkPaths = collector.getAllPaths(zkClient, "/");
+//
+//    ZNRecord idealAfter = zkClient.readData("/DualIsolatedCluster1/IDEALSTATES/brokerResource");
+//    Map<String, String> partitionMap = ideal.getMapField("brokerResource");
 
     // Generate and load data
     _cluster1AvroFiles = createAvroData(CLUSTER_1_SIZE, 1);
@@ -375,14 +386,14 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     loadDataIntoCluster(_cluster2AvroFiles, FEDERATION_TABLE, _cluster2);
 
     // Verify counts
-//    long cluster1Count = getCount(FEDERATION_TABLE, _cluster1);
+    long cluster1Count = getCount(FEDERATION_TABLE, _cluster1);
     long cluster2Count = getCount(FEDERATION_TABLE, _cluster2);
 
-//    assertEquals(cluster1Count, CLUSTER_1_SIZE);
-    assertEquals(cluster2Count, CLUSTER_2_SIZE);
+    assertEquals(cluster1Count, CLUSTER_1_SIZE + CLUSTER_2_SIZE);
+    assertEquals(cluster2Count, CLUSTER_2_SIZE + CLUSTER_1_SIZE);
 
     // Verify data prefixes
-//    assertTrue(containsPrefix(FEDERATION_TABLE, _cluster1, CLUSTER_1_PREFIX));
+    assertTrue(containsPrefix(FEDERATION_TABLE, _cluster1, CLUSTER_1_PREFIX));
     assertTrue(containsPrefix(FEDERATION_TABLE, _cluster2, CLUSTER_2_PREFIX));
   }
 
@@ -475,7 +486,7 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
       case LONG: return (long) baseValue;
       case FLOAT: return (float) (baseValue + 0.1);
       case DOUBLE: return (double) (baseValue + 0.1);
-      case STRING: return "cluster" + clusterId + "_" + fieldName + "_" + baseValue;
+      case STRING: return "cluster" + clusterId + "_" + fieldName + "_";
       case BOOLEAN: return (baseValue % 2) == 0;
       default: return "cluster" + clusterId + "_" + fieldName + "_" + baseValue;
     }
@@ -574,7 +585,7 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   }
 
   private boolean containsPrefix(String tableName, ClusterComponents cluster, String prefix) throws Exception {
-    String query = "SELECT " + STRING_COLUMN + " FROM " + tableName + " LIMIT 5";
+    String query = "SELECT " + STRING_COLUMN + ", count(*) FROM " + tableName + " group by 1 LIMIT 5";
     String result = executeQuery(query, cluster);
 
     try {
@@ -583,6 +594,7 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
         com.fasterxml.jackson.databind.JsonNode rows = root.get("resultTable").get("rows");
         if (rows != null && rows.isArray()) {
           for (com.fasterxml.jackson.databind.JsonNode row : rows) {
+            System.out.println(row);
             if (row.isArray() && row.size() > 0 && row.get(0).asText().contains(prefix)) {
               return true;
             }
