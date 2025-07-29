@@ -310,7 +310,8 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     _spectatorHelixManager.connect();
     if (_secondaryZkServers != null) {
       _secondarySpectatorHelixManager =
-        HelixManagerFactory.getZKHelixManager(_secondaryClusterName, _instanceId, InstanceType.SPECTATOR, _secondaryZkServers);
+          HelixManagerFactory.getZKHelixManager(_secondaryClusterName, _instanceId, InstanceType.SPECTATOR,
+              _secondaryZkServers);
       _secondarySpectatorHelixManager.connect();
     }
     _helixAdmin = _spectatorHelixManager.getClusterManagmentTool();
@@ -350,7 +351,8 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
 //    String secondaryZkClustersConfig = _brokerConf.getProperty("pinot.broker.federated.secondary.zk.clusters", "");
 //    if (!secondaryZkClustersConfig.isEmpty()) {
 //      LOGGER.info("Initializing federated routing manager with secondary clusters: {}", secondaryZkClustersConfig);
-//      _federatedRoutingManager = new FederatedRoutingManager(_brokerMetrics, _serverRoutingStatsManager, _brokerConf, _routingManager);
+//      _federatedRoutingManager = new FederatedRoutingManager(
+//          _brokerMetrics, _serverRoutingStatsManager, _brokerConf, _routingManager);
 //      _federatedRoutingManager.init(_spectatorHelixManager);
 //    } else {
 //      LOGGER.info("No secondary ZooKeeper clusters configured, using primary routing manager only");
@@ -359,7 +361,8 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
 
     final PinotConfiguration factoryConf = _brokerConf.subset(Broker.ACCESS_CONTROL_CONFIG_PREFIX);
     // Adding cluster name to the config so that it can be used by the AccessControlFactory
-    factoryConf.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, _brokerConf.getProperty(Helix.CONFIG_OF_CLUSTER_NAME));
+    factoryConf.setProperty(Helix.CONFIG_OF_CLUSTER_NAME,
+        _brokerConf.getProperty(Helix.CONFIG_OF_CLUSTER_NAME));
     _accessControlFactory = AccessControlFactory.loadFactory(factoryConf, _propertyStore);
     _queryQuotaManager = new HelixExternalViewBasedQueryQuotaManager(_brokerMetrics, _instanceId);
     _queryQuotaManager.init(_spectatorHelixManager);
@@ -545,12 +548,15 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     if (_secondaryClusterName != null) {
       LOGGER.info("Connecting secondary participant Helix manager");
       _secondaryParticipantHelixManager =
-        HelixManagerFactory.getZKHelixManager(_secondaryClusterName, _secondaryInstanceId, InstanceType.PARTICIPANT, _secondaryZkServers);
+          HelixManagerFactory.getZKHelixManager(_secondaryClusterName, _secondaryInstanceId, InstanceType.PARTICIPANT,
+              _secondaryZkServers);
       // Register state model factory
       _secondaryParticipantHelixManager.getStateMachineEngine()
         .registerStateModelFactory(BrokerResourceOnlineOfflineStateModelFactory.getStateModelDef(),
-          new BrokerResourceOnlineOfflineStateModelFactory(_secondarySpectatorHelixManager.getHelixPropertyStore(), _secondarySpectatorHelixManager.getHelixDataAccessor(), _secondaryRoutingManager,
-            _queryQuotaManager));
+          new BrokerResourceOnlineOfflineStateModelFactory(
+              _secondarySpectatorHelixManager.getHelixPropertyStore(),
+              _secondarySpectatorHelixManager.getHelixDataAccessor(),
+              _secondaryRoutingManager, _queryQuotaManager));
       // Register user-define message handler factory
       _secondaryParticipantHelixManager.getMessagingService()
         .registerMessageHandlerFactory(Message.MessageType.USER_DEFINE_MSG.toString(),
@@ -696,10 +702,12 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     /**
    * Updates the secondary cluster instance config and broker resource
    */
-  private void updateSecondaryInstanceConfigAndBrokerResource(List<String> instanceTags, boolean shouldUpdateBrokerResource) {
+  private void updateSecondaryInstanceConfigAndBrokerResource(
+      List<String> instanceTags, boolean shouldUpdateBrokerResource) {
     try {
       // Get or create secondary instance config
-      InstanceConfig secondaryInstanceConfig = HelixHelper.getInstanceConfig(_secondaryParticipantHelixManager, _secondaryInstanceId);
+      InstanceConfig secondaryInstanceConfig = HelixHelper.getInstanceConfig(
+          _secondaryParticipantHelixManager, _secondaryInstanceId);
       if (secondaryInstanceConfig == null) {
         // Create new instance config for secondary cluster
         secondaryInstanceConfig = new InstanceConfig(_secondaryInstanceId);
@@ -712,8 +720,10 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
         }
 
         // Add instance to secondary cluster
-        _secondaryParticipantHelixManager.getClusterManagmentTool().addInstance(_secondaryClusterName, secondaryInstanceConfig);
-        LOGGER.info("Created secondary instance config for: {} in cluster: {}", _secondaryInstanceId, _secondaryClusterName);
+        _secondaryParticipantHelixManager.getClusterManagmentTool().addInstance(
+            _secondaryClusterName, secondaryInstanceConfig);
+        LOGGER.info("Created secondary instance config for: {} in cluster: {}",
+            _secondaryInstanceId, _secondaryClusterName);
       } else {
         // Update existing secondary instance config
         boolean updated = HelixHelper.updateHostnamePort(secondaryInstanceConfig, _hostname, _port);
@@ -742,18 +752,24 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
         try {
           long startTimeMs = System.currentTimeMillis();
           List<String> tablesAdded = new ArrayList<>();
-          HelixHelper.updateBrokerResource(_secondaryParticipantHelixManager, _secondaryInstanceId, instanceTags,
-              tablesAdded, null);
-          LOGGER.info("Updated secondary broker resource for new joining broker: {} with instance tags: {} in {}ms, tables added: {}",
+          HelixHelper.updateBrokerResource(_secondaryParticipantHelixManager, _secondaryInstanceId,
+              instanceTags, tablesAdded, null);
+          LOGGER.info(
+              "Updated secondary broker resource for new joining broker: {} with instance tags: {} in {}ms, "
+                  + "tables added: {}",
               _secondaryInstanceId, instanceTags, System.currentTimeMillis() - startTimeMs, tablesAdded);
         } catch (Exception e) {
-          LOGGER.warn("Failed to update secondary broker resource for: {} (this may be normal if secondary cluster has no tables)",
+          LOGGER.warn(
+              "Failed to update secondary broker resource for: {} "
+                  + "(this may be normal if secondary cluster has no tables)",
               _secondaryInstanceId, e);
           // This is expected if the secondary cluster doesn't have any tables configured
         }
       }
     } catch (Exception e) {
-      LOGGER.error("Failed to update secondary cluster instance config and broker resource for: {}", _secondaryInstanceId, e);
+      LOGGER.error(
+          "Failed to update secondary cluster instance config and broker resource for: {}",
+          _secondaryInstanceId, e);
       // Don't fail the entire startup process if secondary cluster update fails
     }
   }
@@ -764,10 +780,13 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
   private void cleanupSecondaryClusterResources() {
     try {
       // Remove the secondary instance from the secondary cluster
-//      _secondaryParticipantHelixManager.getClusterManagmentTool().dropInstance(_secondaryClusterName, _secondaryInstanceId);
-      LOGGER.info("Removed secondary instance: {} from cluster: {}", _secondaryInstanceId, _secondaryClusterName);
+      // _secondaryParticipantHelixManager.getClusterManagmentTool().dropInstance(
+      //     _secondaryClusterName, _secondaryInstanceId);
+      LOGGER.info("Removed secondary instance: {} from cluster: {}",
+          _secondaryInstanceId, _secondaryClusterName);
     } catch (Exception e) {
-      LOGGER.error("Failed to remove secondary instance: {} from cluster: {}", _secondaryInstanceId, _secondaryClusterName, e);
+      LOGGER.error("Failed to remove secondary instance: {} from cluster: {}",
+          _secondaryInstanceId, _secondaryClusterName, e);
       // Don't fail the shutdown process if secondary cluster cleanup fails
     }
   }

@@ -58,7 +58,8 @@ public class FederatedRoutingManager implements RoutingManager {
   private final Map<String, ServerInstance> _combinedServerInstanceMap = new ConcurrentHashMap<>();
   private final Map<String, RoutingTable> _combinedRoutingTableCache = new ConcurrentHashMap<>();
 
-  public FederatedRoutingManager(BrokerRoutingManager primaryRoutingManager, BrokerRoutingManager... secondaryRoutingManagers) {
+  public FederatedRoutingManager(BrokerRoutingManager primaryRoutingManager,
+      BrokerRoutingManager... secondaryRoutingManagers) {
     _primaryRoutingManager = primaryRoutingManager;
     _secondaryRoutingManagers = Arrays.asList(secondaryRoutingManagers);
   }
@@ -125,7 +126,8 @@ public class FederatedRoutingManager implements RoutingManager {
 //      try {
 //        secondaryRoutingManager.refreshSegment(tableNameWithType, segment);
 //      } catch (Exception e) {
-//        LOGGER.error("Error refreshing segment {} for table {} in secondary routing manager", segment, tableNameWithType, e);
+//        LOGGER.error("Error refreshing segment {} for table {} in secondary routing manager",
+//            segment, tableNameWithType, e);
 //      }
 //    }
 //
@@ -185,10 +187,12 @@ public class FederatedRoutingManager implements RoutingManager {
     }
 
     // Get routing table from primary routing manager
-    RoutingTable primaryRoutingTable = _primaryRoutingManager.getRoutingTable(brokerRequest, tableNameWithType, requestId);
+    RoutingTable primaryRoutingTable = _primaryRoutingManager.getRoutingTable(brokerRequest,
+        tableNameWithType, requestId);
 
     // Combine with routing tables from secondary routing managers
-    RoutingTable combinedRoutingTable = combineRoutingTables(primaryRoutingTable, tableNameWithType, brokerRequest, requestId);
+    RoutingTable combinedRoutingTable = combineRoutingTables(primaryRoutingTable, tableNameWithType,
+        brokerRequest, requestId);
 
     // Cache the result
     if (combinedRoutingTable != null) {
@@ -199,11 +203,12 @@ public class FederatedRoutingManager implements RoutingManager {
   }
 
   private RoutingTable combineRoutingTables(RoutingTable primaryRoutingTable, String tableNameWithType,
-    BrokerRequest brokerRequest, long requestId) {
+      BrokerRequest brokerRequest, long requestId) {
     if (primaryRoutingTable == null) {
       // If primary routing table is null, try to get routing table from secondary managers
       for (BrokerRoutingManager secondaryRoutingManager : _secondaryRoutingManagers) {
-        RoutingTable secondaryRoutingTable = secondaryRoutingManager.getRoutingTable(brokerRequest, tableNameWithType, requestId);
+        RoutingTable secondaryRoutingTable = secondaryRoutingManager.getRoutingTable(brokerRequest,
+            tableNameWithType, requestId);
         if (secondaryRoutingTable != null) {
           return secondaryRoutingTable;
         }
@@ -220,10 +225,12 @@ public class FederatedRoutingManager implements RoutingManager {
     // Add routing information from secondary routing managers
     for (BrokerRoutingManager secondaryRoutingManager : _secondaryRoutingManagers) {
       try {
-        RoutingTable secondaryRoutingTable = secondaryRoutingManager.getRoutingTable(brokerRequest, tableNameWithType, requestId);
+        RoutingTable secondaryRoutingTable = secondaryRoutingManager.getRoutingTable(brokerRequest,
+            tableNameWithType, requestId);
         if (secondaryRoutingTable != null) {
           // Combine server instance to segments map
-          for (Map.Entry<ServerInstance, ServerRouteInfo> entry : secondaryRoutingTable.getServerInstanceToSegmentsMap().entrySet()) {
+          for (Map.Entry<ServerInstance, ServerRouteInfo> entry
+              : secondaryRoutingTable.getServerInstanceToSegmentsMap().entrySet()) {
             ServerInstance serverInstance = entry.getKey();
             ServerRouteInfo secondaryRouteInfo = entry.getValue();
 
@@ -245,11 +252,13 @@ public class FederatedRoutingManager implements RoutingManager {
           combinedNumPrunedSegments += secondaryRoutingTable.getNumPrunedSegments();
         }
       } catch (Exception e) {
-        LOGGER.error("Error combining routing table from secondary routing manager for table {}", tableNameWithType, e);
+        LOGGER.error("Error combining routing table from secondary routing manager for table {}",
+            tableNameWithType, e);
       }
     }
 
-    return new RoutingTable(combinedServerInstanceToSegmentsMap, combinedUnavailableSegments, combinedNumPrunedSegments);
+    return new RoutingTable(combinedServerInstanceToSegmentsMap,
+        combinedUnavailableSegments, combinedNumPrunedSegments);
   }
 
   @Nullable
@@ -269,7 +278,8 @@ public class FederatedRoutingManager implements RoutingManager {
           return secondaryTimeBoundaryInfo;
         }
       } catch (Exception e) {
-        LOGGER.error("Error getting time boundary info from secondary routing manager for table {}", tableNameWithType, e);
+        LOGGER.error("Error getting time boundary info from secondary routing manager for table {}",
+            tableNameWithType, e);
       }
     }
 
@@ -293,12 +303,14 @@ public class FederatedRoutingManager implements RoutingManager {
     // Try to get table partition info from secondary routing managers
     for (BrokerRoutingManager secondaryRoutingManager : _secondaryRoutingManagers) {
       try {
-        TablePartitionInfo secondaryTablePartitionInfo = secondaryRoutingManager.getTablePartitionInfo(tableNameWithType);
+        TablePartitionInfo secondaryTablePartitionInfo =
+            secondaryRoutingManager.getTablePartitionInfo(tableNameWithType);
         if (secondaryTablePartitionInfo != null) {
           return secondaryTablePartitionInfo;
         }
       } catch (Exception e) {
-        LOGGER.error("Error getting table partition info from secondary routing manager for table {}", tableNameWithType, e);
+        LOGGER.error("Error getting table partition info from secondary routing manager for table {}",
+            tableNameWithType, e);
       }
     }
 
@@ -319,7 +331,8 @@ public class FederatedRoutingManager implements RoutingManager {
         Set<String> secondaryServingInstances = secondaryRoutingManager.getServingInstances(tableNameWithType);
         combinedServingInstances.addAll(secondaryServingInstances);
       } catch (Exception e) {
-        LOGGER.error("Error getting serving instances from secondary routing manager for table {}", tableNameWithType, e);
+        LOGGER.error("Error getting serving instances from secondary routing manager for table {}",
+            tableNameWithType, e);
       }
     }
 
@@ -348,7 +361,8 @@ public class FederatedRoutingManager implements RoutingManager {
   @Override
   public TablePartitionReplicatedServersInfo getTablePartitionReplicatedServersInfo(String tableNameWithType) {
     // Try to get table partition replicated servers info from primary routing manager first
-    TablePartitionReplicatedServersInfo primaryInfo = _primaryRoutingManager.getTablePartitionReplicatedServersInfo(tableNameWithType);
+    TablePartitionReplicatedServersInfo primaryInfo =
+        _primaryRoutingManager.getTablePartitionReplicatedServersInfo(tableNameWithType);
     if (primaryInfo != null) {
       return primaryInfo;
     }
@@ -356,12 +370,15 @@ public class FederatedRoutingManager implements RoutingManager {
     // Try to get table partition replicated servers info from secondary routing managers
     for (BrokerRoutingManager secondaryRoutingManager : _secondaryRoutingManagers) {
       try {
-        TablePartitionReplicatedServersInfo secondaryInfo = secondaryRoutingManager.getTablePartitionReplicatedServersInfo(tableNameWithType);
+        TablePartitionReplicatedServersInfo secondaryInfo =
+            secondaryRoutingManager.getTablePartitionReplicatedServersInfo(tableNameWithType);
         if (secondaryInfo != null) {
           return secondaryInfo;
         }
       } catch (Exception e) {
-        LOGGER.error("Error getting table partition replicated servers info from secondary routing manager for table {}", tableNameWithType, e);
+        LOGGER.error(
+            "Error getting table partition replicated servers info from secondary routing manager for table {}",
+            tableNameWithType, e);
       }
     }
 

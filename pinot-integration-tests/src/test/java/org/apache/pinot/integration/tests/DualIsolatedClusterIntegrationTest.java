@@ -31,8 +31,6 @@ import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.commons.io.FileUtils;
-import org.apache.helix.zookeeper.datamodel.ZNRecord;
-import org.apache.helix.zookeeper.datamodel.serializer.ZNRecordSerializer;
 import org.apache.helix.zookeeper.impl.client.ZkClient;
 import org.apache.http.HttpStatus;
 import org.apache.pinot.broker.broker.helix.BaseBrokerStarter;
@@ -109,12 +107,12 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
    * Cluster configuration helper class
    */
   private static class ClusterConfig {
-    final String name;
-    final int basePort;
+    final String _name;
+    final int _basePort;
 
     ClusterConfig(String name, int basePort) {
-      this.name = name;
-      this.basePort = basePort;
+      _name = name;
+      _basePort = basePort;
     }
   }
 
@@ -122,19 +120,19 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
    * Cluster components container
    */
   private static class ClusterComponents {
-    ZkStarter.ZookeeperInstance zkInstance;
-    BaseControllerStarter controllerStarter;
-    BaseBrokerStarter brokerStarter;
-    BaseServerStarter serverStarter;
-    int controllerPort;
-    int brokerPort;
-    int serverPort;
-    String zkUrl;
-    String controllerBaseApiUrl;
-    Connection pinotConnection;
-    File tempDir;
-    File segmentDir;
-    File tarDir;
+    ZkStarter.ZookeeperInstance _zkInstance;
+    BaseControllerStarter _controllerStarter;
+    BaseBrokerStarter _brokerStarter;
+    BaseServerStarter _serverStarter;
+    int _controllerPort;
+    int _brokerPort;
+    int _serverPort;
+    String _zkUrl;
+    String _controllerBaseApiUrl;
+    Connection _pinotConnection;
+    File _tempDir;
+    File _segmentDir;
+    File _tarDir;
   }
 
   @BeforeClass
@@ -165,131 +163,133 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   }
 
   private void setupDirectories() throws Exception {
-    _cluster1.tempDir = new File(FileUtils.getTempDirectory(), "cluster1_" + getClass().getSimpleName());
-    _cluster1.segmentDir = new File(_cluster1.tempDir, "segmentDir");
-    _cluster1.tarDir = new File(_cluster1.tempDir, "tarDir");
+    _cluster1._tempDir = new File(FileUtils.getTempDirectory(), "cluster1_" + getClass().getSimpleName());
+    _cluster1._segmentDir = new File(_cluster1._tempDir, "segmentDir");
+    _cluster1._tarDir = new File(_cluster1._tempDir, "tarDir");
 
-    _cluster2.tempDir = new File(FileUtils.getTempDirectory(), "cluster2_" + getClass().getSimpleName());
-    _cluster2.segmentDir = new File(_cluster2.tempDir, "segmentDir");
-    _cluster2.tarDir = new File(_cluster2.tempDir, "tarDir");
+    _cluster2._tempDir = new File(FileUtils.getTempDirectory(), "cluster2_" + getClass().getSimpleName());
+    _cluster2._segmentDir = new File(_cluster2._tempDir, "segmentDir");
+    _cluster2._tarDir = new File(_cluster2._tempDir, "tarDir");
 
-    TestUtils.ensureDirectoriesExistAndEmpty(_cluster1.tempDir, _cluster1.segmentDir, _cluster1.tarDir);
-    TestUtils.ensureDirectoriesExistAndEmpty(_cluster2.tempDir, _cluster2.segmentDir, _cluster2.tarDir);
+    TestUtils.ensureDirectoriesExistAndEmpty(_cluster1._tempDir, _cluster1._segmentDir, _cluster1._tarDir);
+    TestUtils.ensureDirectoriesExistAndEmpty(_cluster2._tempDir, _cluster2._segmentDir, _cluster2._tarDir);
   }
 
   private void startZookeeper(ClusterComponents cluster) throws Exception {
-    LOGGER.info("Starting Zookeeper for cluster: {}", cluster.tempDir.getName());
-    cluster.zkInstance = ZkStarter.startLocalZkServer();
-    cluster.zkUrl = cluster.zkInstance.getZkUrl();
+    LOGGER.info("Starting Zookeeper for cluster: {}", cluster._tempDir.getName());
+    cluster._zkInstance = ZkStarter.startLocalZkServer();
+    cluster._zkUrl = cluster._zkInstance.getZkUrl();
   }
 
   private void startControllerInit(ClusterComponents cluster, ClusterConfig config) throws Exception {
-    cluster.controllerPort = findAvailablePort(config.basePort);
+    cluster._controllerPort = findAvailablePort(config._basePort);
     startController(cluster, config);
   }
 
-  private void startCluster(ClusterComponents cluster, ClusterComponents secondaryCluster, ClusterConfig config) throws Exception {
-    LOGGER.info("Starting cluster: {}", config.name);
+  private void startCluster(ClusterComponents cluster, ClusterComponents secondaryCluster,
+      ClusterConfig config) throws Exception {
+    LOGGER.info("Starting cluster: {}", config._name);
 
     // Start Zookeeper
-//    cluster.zkInstance = ZkStarter.startLocalZkServer();
-//    cluster.zkUrl = cluster.zkInstance.getZkUrl();
+//    cluster._zkInstance = ZkStarter.startLocalZkServer();
+//    cluster._zkUrl = cluster._zkInstance.getZkUrl();
 
     // Start Controller
-//    cluster.controllerPort = findAvailablePort(config.basePort);
+//    cluster._controllerPort = findAvailablePort(config._basePort);
 //    startController(cluster, config);
 
     // Start Broker
-    cluster.brokerPort = findAvailablePort(cluster.controllerPort + 1000);
+    cluster._brokerPort = findAvailablePort(cluster._controllerPort + 1000);
     startBroker(cluster, secondaryCluster, config);
 
     // Start Server with MSE enabled
-    cluster.serverPort = findAvailablePort(cluster.brokerPort + 1000);
+    cluster._serverPort = findAvailablePort(cluster._brokerPort + 1000);
     startServerWithMSE(cluster, config);
 
-    LOGGER.info("Cluster {} started successfully", config.name);
+    LOGGER.info("Cluster {} started successfully", config._name);
   }
 
   private void startController(ClusterComponents cluster, ClusterConfig config) throws Exception {
     Map<String, Object> controllerConfig = new HashMap<>();
-    controllerConfig.put(ControllerConf.ZK_STR, cluster.zkUrl);
-    controllerConfig.put(ControllerConf.HELIX_CLUSTER_NAME, config.name);
+    controllerConfig.put(ControllerConf.ZK_STR, cluster._zkUrl);
+    controllerConfig.put(ControllerConf.HELIX_CLUSTER_NAME, config._name);
     controllerConfig.put(ControllerConf.CONTROLLER_HOST, ControllerTest.LOCAL_HOST);
-    controllerConfig.put(ControllerConf.CONTROLLER_PORT, cluster.controllerPort);
-    controllerConfig.put(ControllerConf.DATA_DIR, cluster.tempDir.getAbsolutePath());
-    controllerConfig.put(ControllerConf.LOCAL_TEMP_DIR, cluster.tempDir.getAbsolutePath());
+    controllerConfig.put(ControllerConf.CONTROLLER_PORT, cluster._controllerPort);
+    controllerConfig.put(ControllerConf.DATA_DIR, cluster._tempDir.getAbsolutePath());
+    controllerConfig.put(ControllerConf.LOCAL_TEMP_DIR, cluster._tempDir.getAbsolutePath());
     controllerConfig.put(ControllerConf.DISABLE_GROOVY, false);
     controllerConfig.put(ControllerConf.CONSOLE_SWAGGER_ENABLE, false);
     controllerConfig.put(CommonConstants.CONFIG_OF_TIMEZONE, "UTC");
 
-    cluster.controllerStarter = createControllerStarter();
-    cluster.controllerStarter.init(new PinotConfiguration(controllerConfig));
-    cluster.controllerStarter.start();
-    cluster.controllerBaseApiUrl = "http://localhost:" + cluster.controllerPort;
+    cluster._controllerStarter = createControllerStarter();
+    cluster._controllerStarter.init(new PinotConfiguration(controllerConfig));
+    cluster._controllerStarter.start();
+    cluster._controllerBaseApiUrl = "http://localhost:" + cluster._controllerPort;
   }
 
-  private void startBroker(ClusterComponents cluster, ClusterComponents secondaryCluster, ClusterConfig config) throws Exception {
+  private void startBroker(ClusterComponents cluster, ClusterComponents secondaryCluster,
+      ClusterConfig config) throws Exception {
     PinotConfiguration brokerConfig = new PinotConfiguration();
-    brokerConfig.setProperty(Helix.CONFIG_OF_ZOOKEEPR_SERVER, cluster.zkUrl);
-    if (config.name.equalsIgnoreCase("DualIsolatedCluster2")) {
-      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPR_SERVER, secondaryCluster.zkUrl);
+    brokerConfig.setProperty(Helix.CONFIG_OF_ZOOKEEPR_SERVER, cluster._zkUrl);
+    if (config._name.equalsIgnoreCase("DualIsolatedCluster2")) {
+      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPR_SERVER, secondaryCluster._zkUrl);
       brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME, "DualIsolatedCluster1");
     } else {
-      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPR_SERVER, secondaryCluster.zkUrl);
+      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPR_SERVER, secondaryCluster._zkUrl);
       brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME, "DualIsolatedCluster2");
     }
-    brokerConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config.name);
+    brokerConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config._name);
     brokerConfig.setProperty(Broker.CONFIG_OF_BROKER_HOSTNAME, ControllerTest.LOCAL_HOST);
-    brokerConfig.setProperty(Helix.KEY_OF_BROKER_QUERY_PORT, cluster.brokerPort);
+    brokerConfig.setProperty(Helix.KEY_OF_BROKER_QUERY_PORT, cluster._brokerPort);
     brokerConfig.setProperty(Broker.CONFIG_OF_BROKER_TIMEOUT_MS, 60 * 1000L);
     brokerConfig.setProperty(Broker.CONFIG_OF_DELAY_SHUTDOWN_TIME_MS, 0);
     brokerConfig.setProperty(CommonConstants.CONFIG_OF_TIMEZONE, "UTC");
 
-    cluster.brokerStarter = createBrokerStarter();
-    cluster.brokerStarter.init(brokerConfig);
-    cluster.brokerStarter.start();
+    cluster._brokerStarter = createBrokerStarter();
+    cluster._brokerStarter.init(brokerConfig);
+    cluster._brokerStarter.start();
   }
 
   private void startServer(ClusterComponents cluster, ClusterConfig config) throws Exception {
     PinotConfiguration serverConfig = new PinotConfiguration();
-    serverConfig.setProperty(Helix.CONFIG_OF_ZOOKEEPR_SERVER, cluster.zkUrl);
-    serverConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config.name);
+    serverConfig.setProperty(Helix.CONFIG_OF_ZOOKEEPR_SERVER, cluster._zkUrl);
+    serverConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config._name);
     serverConfig.setProperty(Helix.KEY_OF_SERVER_NETTY_HOST, ControllerTest.LOCAL_HOST);
-    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_DATA_DIR, cluster.tempDir + "/dataDir");
-    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_SEGMENT_TAR_DIR, cluster.tempDir + "/segmentTar");
+    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_DATA_DIR, cluster._tempDir + "/dataDir");
+    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_SEGMENT_TAR_DIR, cluster._tempDir + "/segmentTar");
     serverConfig.setProperty(Server.CONFIG_OF_SEGMENT_FORMAT_VERSION, "v3");
     serverConfig.setProperty(Server.CONFIG_OF_SHUTDOWN_ENABLE_QUERY_CHECK, false);
-    serverConfig.setProperty(Server.CONFIG_OF_ADMIN_API_PORT, findAvailablePort(cluster.serverPort));
-    serverConfig.setProperty(Helix.KEY_OF_SERVER_NETTY_PORT, findAvailablePort(cluster.serverPort + 1));
-    serverConfig.setProperty(Server.CONFIG_OF_GRPC_PORT, findAvailablePort(cluster.serverPort + 2));
+    serverConfig.setProperty(Server.CONFIG_OF_ADMIN_API_PORT, findAvailablePort(cluster._serverPort));
+    serverConfig.setProperty(Helix.KEY_OF_SERVER_NETTY_PORT, findAvailablePort(cluster._serverPort + 1));
+    serverConfig.setProperty(Server.CONFIG_OF_GRPC_PORT, findAvailablePort(cluster._serverPort + 2));
     serverConfig.setProperty(Server.CONFIG_OF_ENABLE_THREAD_CPU_TIME_MEASUREMENT, true);
     serverConfig.setProperty(CommonConstants.CONFIG_OF_TIMEZONE, "UTC");
     serverConfig.setProperty(Helix.CONFIG_OF_MULTI_STAGE_ENGINE_ENABLED, false);
 
-    cluster.serverStarter = createServerStarter();
-    cluster.serverStarter.init(serverConfig);
-    cluster.serverStarter.start();
+    cluster._serverStarter = createServerStarter();
+    cluster._serverStarter.init(serverConfig);
+    cluster._serverStarter.start();
   }
 
   private void startServerWithMSE(ClusterComponents cluster, ClusterConfig config) throws Exception {
     PinotConfiguration serverConfig = new PinotConfiguration();
-    serverConfig.setProperty(Helix.CONFIG_OF_ZOOKEEPR_SERVER, cluster.zkUrl);
-    serverConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config.name);
+    serverConfig.setProperty(Helix.CONFIG_OF_ZOOKEEPR_SERVER, cluster._zkUrl);
+    serverConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config._name);
     serverConfig.setProperty(Helix.KEY_OF_SERVER_NETTY_HOST, ControllerTest.LOCAL_HOST);
-    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_DATA_DIR, cluster.tempDir + "/dataDir");
-    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_SEGMENT_TAR_DIR, cluster.tempDir + "/segmentTar");
+    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_DATA_DIR, cluster._tempDir + "/dataDir");
+    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_SEGMENT_TAR_DIR, cluster._tempDir + "/segmentTar");
     serverConfig.setProperty(Server.CONFIG_OF_SEGMENT_FORMAT_VERSION, "v3");
     serverConfig.setProperty(Server.CONFIG_OF_SHUTDOWN_ENABLE_QUERY_CHECK, false);
-    serverConfig.setProperty(Server.CONFIG_OF_ADMIN_API_PORT, findAvailablePort(cluster.serverPort));
-    serverConfig.setProperty(Helix.KEY_OF_SERVER_NETTY_PORT, findAvailablePort(cluster.serverPort + 1));
-    serverConfig.setProperty(Server.CONFIG_OF_GRPC_PORT, findAvailablePort(cluster.serverPort + 2));
+    serverConfig.setProperty(Server.CONFIG_OF_ADMIN_API_PORT, findAvailablePort(cluster._serverPort));
+    serverConfig.setProperty(Helix.KEY_OF_SERVER_NETTY_PORT, findAvailablePort(cluster._serverPort + 1));
+    serverConfig.setProperty(Server.CONFIG_OF_GRPC_PORT, findAvailablePort(cluster._serverPort + 2));
     serverConfig.setProperty(Server.CONFIG_OF_ENABLE_THREAD_CPU_TIME_MEASUREMENT, true);
     serverConfig.setProperty(CommonConstants.CONFIG_OF_TIMEZONE, "UTC");
     serverConfig.setProperty(Helix.CONFIG_OF_MULTI_STAGE_ENGINE_ENABLED, true);
 
-    cluster.serverStarter = createServerStarter();
-    cluster.serverStarter.init(serverConfig);
-    cluster.serverStarter.start();
+    cluster._serverStarter = createServerStarter();
+    cluster._serverStarter.init(serverConfig);
+    cluster._serverStarter.start();
   }
 
   private int findAvailablePort(int basePort) {
@@ -308,26 +308,26 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
 
   private void setupPinotConnections() throws Exception {
     PinotClientTransport transport1 = new JsonAsyncHttpPinotClientTransportFactory().buildTransport();
-    _cluster1.pinotConnection = ConnectionFactory.fromZookeeper(
-        _cluster1.zkUrl + "/" + CLUSTER_1_CONFIG.name, transport1);
+    _cluster1._pinotConnection = ConnectionFactory.fromZookeeper(
+        _cluster1._zkUrl + "/" + CLUSTER_1_CONFIG._name, transport1);
 
     PinotClientTransport transport2 = new JsonAsyncHttpPinotClientTransportFactory().buildTransport();
-    _cluster2.pinotConnection = ConnectionFactory.fromZookeeper(
-        _cluster2.zkUrl + "/" + CLUSTER_2_CONFIG.name, transport2);
+    _cluster2._pinotConnection = ConnectionFactory.fromZookeeper(
+        _cluster2._zkUrl + "/" + CLUSTER_2_CONFIG._name, transport2);
   }
 
   @Test
   public void testClusterIsolation() throws Exception {
     setupFederationTable();
 
-    String cluster1Tables = ControllerTest.sendGetRequest(_cluster1.controllerBaseApiUrl + "/tables");
-    String cluster2Tables = ControllerTest.sendGetRequest(_cluster2.controllerBaseApiUrl + "/tables");
+    String cluster1Tables = ControllerTest.sendGetRequest(_cluster1._controllerBaseApiUrl + "/tables");
+    String cluster2Tables = ControllerTest.sendGetRequest(_cluster2._controllerBaseApiUrl + "/tables");
 
     assertTrue(cluster1Tables.contains(FEDERATION_TABLE));
     assertTrue(cluster2Tables.contains(FEDERATION_TABLE));
 
-    String cluster1Schemas = ControllerTest.sendGetRequest(_cluster1.controllerBaseApiUrl + "/schemas");
-    String cluster2Schemas = ControllerTest.sendGetRequest(_cluster2.controllerBaseApiUrl + "/schemas");
+    String cluster1Schemas = ControllerTest.sendGetRequest(_cluster1._controllerBaseApiUrl + "/schemas");
+    String cluster2Schemas = ControllerTest.sendGetRequest(_cluster2._controllerBaseApiUrl + "/schemas");
 
     assertTrue(cluster1Schemas.contains(FEDERATION_TABLE));
     assertTrue(cluster2Schemas.contains(FEDERATION_TABLE));
@@ -337,8 +337,10 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   public void testIndependentOperations() throws Exception {
     setupFederationTable();
 
-    String cluster1TableInfo = ControllerTest.sendGetRequest(_cluster1.controllerBaseApiUrl + "/tables/" + FEDERATION_TABLE);
-    String cluster2TableInfo = ControllerTest.sendGetRequest(_cluster2.controllerBaseApiUrl + "/tables/" + FEDERATION_TABLE);
+    String cluster1TableInfo = ControllerTest.sendGetRequest(
+        _cluster1._controllerBaseApiUrl + "/tables/" + FEDERATION_TABLE);
+    String cluster2TableInfo = ControllerTest.sendGetRequest(
+        _cluster2._controllerBaseApiUrl + "/tables/" + FEDERATION_TABLE);
 
     assertNotNull(cluster1TableInfo);
     assertNotNull(cluster2TableInfo);
@@ -378,7 +380,9 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     }
 
     private void collectPathsRecursive(ZkClient zkClient, String path, List<String> paths) {
-      if (!zkClient.exists(path)) return;
+      if (!zkClient.exists(path)) {
+        return;
+      }
 
       paths.add(path);
       List<String> children = zkClient.getChildren(path);
@@ -481,10 +485,11 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     assertTrue(table2Count > 0);
 
     // Test join query with MSE
-    String joinQuery = "SET useMultistageEngine=true; SET usePhysicalOptimizer=true; SET useLiteMode=true; SET runInBroker=true; SELECT t1." + JOIN_COLUMN + ", COUNT(*) as count " +
-        "FROM " + FEDERATION_TABLE + " t1 " +
-        "JOIN " + FEDERATION_TABLE_2 + " t2 ON t1." + JOIN_COLUMN + " = t2." + JOIN_COLUMN + " " +
-        "GROUP BY t1." + JOIN_COLUMN + " LIMIT 10";
+    String joinQuery = "SET useMultistageEngine=true; SET usePhysicalOptimizer=true; "
+        + "SET useLiteMode=true; SET runInBroker=true; SELECT t1." + JOIN_COLUMN + ", COUNT(*) as count "
+        + "FROM " + FEDERATION_TABLE + " t1 "
+        + "JOIN " + FEDERATION_TABLE_2 + " t2 ON t1." + JOIN_COLUMN + " = t2." + JOIN_COLUMN + " "
+        + "GROUP BY t1." + JOIN_COLUMN + " LIMIT 10";
 
     String result = executeQuery(joinQuery, _cluster1);
     System.out.println("SQL OUTPUT = " + result);
@@ -498,7 +503,7 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     Schema schema = createSchema(SCHEMA_FILE);
     org.apache.avro.Schema avroSchema = createAvroSchema(schema);
 
-    File tempDir = (clusterId == 1) ? _cluster1.tempDir : _cluster2.tempDir;
+    File tempDir = (clusterId == 1) ? _cluster1._tempDir : _cluster2._tempDir;
     File avroFile = new File(tempDir, "cluster" + clusterId + "_data.avro");
 
     try (DataFileWriter<GenericData.Record> fileWriter = new DataFileWriter<>(new GenericDatumWriter<>(avroSchema))) {
@@ -518,11 +523,12 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     return List.of(avroFile);
   }
 
-  private List<File> createAvroDataMultipleSegments(int totalDataSize, int clusterId, int numSegments) throws Exception {
+  private List<File> createAvroDataMultipleSegments(int totalDataSize, int clusterId,
+      int numSegments) throws Exception {
     Schema schema = createSchema(SCHEMA_FILE);
     org.apache.avro.Schema avroSchema = createAvroSchema(schema);
 
-    File tempDir = (clusterId == 1) ? _cluster1.tempDir : _cluster2.tempDir;
+    File tempDir = (clusterId == 1) ? _cluster1._tempDir : _cluster2._tempDir;
     List<File> avroFiles = new ArrayList<>();
     int dataPerSegment = totalDataSize / numSegments;
 
@@ -591,8 +597,8 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   }
 
   private void loadDataIntoCluster(List<File> avroFiles, String tableName, ClusterComponents cluster) throws Exception {
-    FileUtils.cleanDirectory(cluster.segmentDir);
-    FileUtils.cleanDirectory(cluster.tarDir);
+    FileUtils.cleanDirectory(cluster._segmentDir);
+    FileUtils.cleanDirectory(cluster._tarDir);
 
     Schema schema = createSchema(SCHEMA_FILE);
     schema.setSchemaName(tableName);
@@ -602,8 +608,9 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
         .setTimeColumnName(TIME_COLUMN)
         .build();
 
-    ClusterIntegrationTestUtils.buildSegmentsFromAvro(avroFiles, tableConfig, schema, 0, cluster.segmentDir, cluster.tarDir);
-    uploadSegmentsToCluster(tableName, cluster.tarDir, cluster.controllerBaseApiUrl);
+    ClusterIntegrationTestUtils.buildSegmentsFromAvro(avroFiles, tableConfig, schema, 0,
+        cluster._segmentDir, cluster._tarDir);
+    uploadSegmentsToCluster(tableName, cluster._tarDir, cluster._controllerBaseApiUrl);
     Thread.sleep(2000);
   }
 
@@ -616,8 +623,9 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
 
     try (FileUploadDownloadClient fileUploadDownloadClient = new FileUploadDownloadClient()) {
       for (File segmentTarFile : segmentTarFiles) {
-        int status = fileUploadDownloadClient.uploadSegment(uploadSegmentHttpURI, segmentTarFile.getName(), segmentTarFile,
-            List.of(), tableName, TableType.OFFLINE).getStatusCode();
+        int status = fileUploadDownloadClient.uploadSegment(uploadSegmentHttpURI,
+            segmentTarFile.getName(), segmentTarFile, List.of(), tableName, TableType.OFFLINE)
+            .getStatusCode();
         assertEquals(status, HttpStatus.SC_OK);
       }
     }
@@ -626,44 +634,44 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   }
 
   private void setupFederationTable() throws Exception {
-    dropTableAndSchemaIfExists(FEDERATION_TABLE, _cluster1.controllerBaseApiUrl);
-    dropTableAndSchemaIfExists(FEDERATION_TABLE, _cluster2.controllerBaseApiUrl);
+    dropTableAndSchemaIfExists(FEDERATION_TABLE, _cluster1._controllerBaseApiUrl);
+    dropTableAndSchemaIfExists(FEDERATION_TABLE, _cluster2._controllerBaseApiUrl);
 
     Schema schema = createSchema(SCHEMA_FILE);
     schema.setSchemaName(FEDERATION_TABLE);
-    addSchemaToCluster(schema, _cluster1.controllerBaseApiUrl);
-    addSchemaToCluster(schema, _cluster2.controllerBaseApiUrl);
+    addSchemaToCluster(schema, _cluster1._controllerBaseApiUrl);
+    addSchemaToCluster(schema, _cluster2._controllerBaseApiUrl);
 
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE)
         .setTableName(FEDERATION_TABLE)
         .setTimeColumnName(TIME_COLUMN)
         .build();
-    addTableConfigToCluster(tableConfig, _cluster1.controllerBaseApiUrl);
-    addTableConfigToCluster(tableConfig, _cluster2.controllerBaseApiUrl);
+    addTableConfigToCluster(tableConfig, _cluster1._controllerBaseApiUrl);
+    addTableConfigToCluster(tableConfig, _cluster2._controllerBaseApiUrl);
   }
 
   private void setupFederationTable2() throws Exception {
-    dropTableAndSchemaIfExists(FEDERATION_TABLE_2, _cluster1.controllerBaseApiUrl);
-    dropTableAndSchemaIfExists(FEDERATION_TABLE_2, _cluster2.controllerBaseApiUrl);
+    dropTableAndSchemaIfExists(FEDERATION_TABLE_2, _cluster1._controllerBaseApiUrl);
+    dropTableAndSchemaIfExists(FEDERATION_TABLE_2, _cluster2._controllerBaseApiUrl);
 
     Schema schema = createSchema(SCHEMA_FILE);
     schema.setSchemaName(FEDERATION_TABLE_2);
-    addSchemaToCluster(schema, _cluster1.controllerBaseApiUrl);
-    addSchemaToCluster(schema, _cluster2.controllerBaseApiUrl);
+    addSchemaToCluster(schema, _cluster1._controllerBaseApiUrl);
+    addSchemaToCluster(schema, _cluster2._controllerBaseApiUrl);
 
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE)
         .setTableName(FEDERATION_TABLE_2)
         .setTimeColumnName(TIME_COLUMN)
         .build();
-    addTableConfigToCluster(tableConfig, _cluster1.controllerBaseApiUrl);
-    addTableConfigToCluster(tableConfig, _cluster2.controllerBaseApiUrl);
+    addTableConfigToCluster(tableConfig, _cluster1._controllerBaseApiUrl);
+    addTableConfigToCluster(tableConfig, _cluster2._controllerBaseApiUrl);
   }
 
   private void cleanSegmentDirs() throws Exception {
-    FileUtils.cleanDirectory(_cluster1.segmentDir);
-    FileUtils.cleanDirectory(_cluster1.tarDir);
-    FileUtils.cleanDirectory(_cluster2.segmentDir);
-    FileUtils.cleanDirectory(_cluster2.tarDir);
+    FileUtils.cleanDirectory(_cluster1._segmentDir);
+    FileUtils.cleanDirectory(_cluster1._tarDir);
+    FileUtils.cleanDirectory(_cluster2._segmentDir);
+    FileUtils.cleanDirectory(_cluster2._tarDir);
   }
 
   private void dropTableAndSchemaIfExists(String tableName, String controllerBaseApiUrl) throws Exception {
@@ -704,7 +712,8 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     String result = executeQuery(query, cluster);
 
     try {
-      com.fasterxml.jackson.databind.JsonNode root = com.fasterxml.jackson.databind.json.JsonMapper.builder().build().readTree(result);
+      com.fasterxml.jackson.databind.JsonNode root =
+          com.fasterxml.jackson.databind.json.JsonMapper.builder().build().readTree(result);
       if (root.has("resultTable")) {
         com.fasterxml.jackson.databind.JsonNode rows = root.get("resultTable").get("rows");
         if (rows != null && rows.isArray()) {
@@ -723,7 +732,7 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   }
 
   private String executeQuery(String query, ClusterComponents cluster) throws Exception {
-    String queryUrl = "http://localhost:" + cluster.brokerPort + "/query/sql";
+    String queryUrl = "http://localhost:" + cluster._brokerPort + "/query/sql";
     Map<String, Object> requestPayload = new HashMap<>();
     requestPayload.put("sql", query);
     String jsonPayload = JsonUtils.objectToPrettyString(requestPayload);
@@ -732,7 +741,8 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
 
   private long parseCountResult(String result) {
     try {
-      com.fasterxml.jackson.databind.JsonNode root = com.fasterxml.jackson.databind.json.JsonMapper.builder().build().readTree(result);
+      com.fasterxml.jackson.databind.JsonNode root =
+          com.fasterxml.jackson.databind.json.JsonMapper.builder().build().readTree(result);
       if (root.has("resultTable")) {
         com.fasterxml.jackson.databind.JsonNode resultTable = root.get("resultTable");
         if (resultTable.has("rows")) {
@@ -762,20 +772,36 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     LOGGER.info("Tearing down dual isolated Pinot clusters");
 
     // Stop Cluster 1 components
-    if (_cluster1.serverStarter != null) _cluster1.serverStarter.stop();
-    if (_cluster1.brokerStarter != null) _cluster1.brokerStarter.stop();
-    if (_cluster1.controllerStarter != null) _cluster1.controllerStarter.stop();
-    if (_cluster1.zkInstance != null) ZkStarter.stopLocalZkServer(_cluster1.zkInstance);
+    if (_cluster1._serverStarter != null) {
+      _cluster1._serverStarter.stop();
+    }
+    if (_cluster1._brokerStarter != null) {
+      _cluster1._brokerStarter.stop();
+    }
+    if (_cluster1._controllerStarter != null) {
+      _cluster1._controllerStarter.stop();
+    }
+    if (_cluster1._zkInstance != null) {
+      ZkStarter.stopLocalZkServer(_cluster1._zkInstance);
+    }
 
     // Stop Cluster 2 components
-    if (_cluster2.serverStarter != null) _cluster2.serverStarter.stop();
-    if (_cluster2.brokerStarter != null) _cluster2.brokerStarter.stop();
-    if (_cluster2.controllerStarter != null) _cluster2.controllerStarter.stop();
-    if (_cluster2.zkInstance != null) ZkStarter.stopLocalZkServer(_cluster2.zkInstance);
+    if (_cluster2._serverStarter != null) {
+      _cluster2._serverStarter.stop();
+    }
+    if (_cluster2._brokerStarter != null) {
+      _cluster2._brokerStarter.stop();
+    }
+    if (_cluster2._controllerStarter != null) {
+      _cluster2._controllerStarter.stop();
+    }
+    if (_cluster2._zkInstance != null) {
+      ZkStarter.stopLocalZkServer(_cluster2._zkInstance);
+    }
 
     // Clean up test directories
-    FileUtils.deleteQuietly(_cluster1.tempDir);
-    FileUtils.deleteQuietly(_cluster2.tempDir);
+    FileUtils.deleteQuietly(_cluster1._tempDir);
+    FileUtils.deleteQuietly(_cluster2._tempDir);
 
     LOGGER.info("Dual isolated Pinot clusters torn down successfully");
   }
