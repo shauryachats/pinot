@@ -106,6 +106,7 @@ import org.slf4j.LoggerFactory;
 public class BrokerRoutingManager implements RoutingManager, ClusterChangeHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(BrokerRoutingManager.class);
 
+  private final String _parentClusterName;
   private final BrokerMetrics _brokerMetrics;
   private final Map<String, RoutingEntry> _routingEntryMap = new ConcurrentHashMap<>();
   private final Map<String, ServerInstance> _enabledServerInstanceMap = new ConcurrentHashMap<>();
@@ -128,6 +129,7 @@ public class BrokerRoutingManager implements RoutingManager, ClusterChangeHandle
     _brokerMetrics = brokerMetrics;
     _serverRoutingStatsManager = serverRoutingStatsManager;
     _pinotConfig = pinotConfig;
+    _parentClusterName = _pinotConfig.getProperty("pinot.cluster.name");
     _enablePartitionMetadataManager =
         pinotConfig.getProperty(CommonConstants.Broker.CONFIG_OF_ENABLE_PARTITION_METADATA_MANAGER,
             CommonConstants.Broker.DEFAULT_ENABLE_PARTITION_METADATA_MANAGER);
