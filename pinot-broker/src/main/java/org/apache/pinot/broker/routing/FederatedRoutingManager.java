@@ -20,7 +20,9 @@ package org.apache.pinot.broker.routing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +45,7 @@ import org.slf4j.LoggerFactory;
  * It maintains a primary BrokerRoutingManager and multiple secondary routing managers,
  * each connected to their own ZooKeeper cluster.
  */
-public class FederatedRoutingManager implements RoutingManager{
+public class FederatedRoutingManager implements RoutingManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(FederatedRoutingManager.class);
 
   // Primary routing manager (connected to primary ZooKeeper cluster)
@@ -276,6 +278,7 @@ public class FederatedRoutingManager implements RoutingManager{
 
   @Override
   public Map<String, ServerInstance> getEnabledServerInstanceMap() {
+    updateCombinedServerInstances();
     return _combinedServerInstanceMap;
   }
 
@@ -306,9 +309,11 @@ public class FederatedRoutingManager implements RoutingManager{
   public Set<String> getServingInstances(String tableNameWithType) {
     // Get serving instances from primary routing manager
     Set<String> primaryServingInstances = _primaryRoutingManager.getServingInstances(tableNameWithType);
-
+    if (primaryServingInstances == null) {
+      primaryServingInstances = Collections.emptySet();
+    }
     // Combine with serving instances from secondary routing managers
-    Set<String> combinedServingInstances = new java.util.HashSet<>(primaryServingInstances);
+    Set<String> combinedServingInstances = new HashSet<>(primaryServingInstances);
     for (BrokerRoutingManager secondaryRoutingManager : _secondaryRoutingManagers) {
       try {
         Set<String> secondaryServingInstances = secondaryRoutingManager.getServingInstances(tableNameWithType);
@@ -318,7 +323,7 @@ public class FederatedRoutingManager implements RoutingManager{
       }
     }
 
-    return combinedServingInstances;
+    return combinedServingInstances.isEmpty() ? null : combinedServingInstances;
   }
 
   @Override

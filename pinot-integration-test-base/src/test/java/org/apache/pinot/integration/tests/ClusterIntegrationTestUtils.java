@@ -356,13 +356,13 @@ public class ClusterIntegrationTestUtils {
     segmentGeneratorConfig.setOutDir(segmentDir.getPath());
     segmentGeneratorConfig.setTableName(tableConfig.getTableName());
     segmentGeneratorConfig.setSegmentNamePostfix(segmentNamePostfix);
-    segmentGeneratorConfig.setSegmentNameGenerator(new SegmentNameGenerator() {
-      @Override
-      public String generateSegmentName(int sequenceId, @org.jetbrains.annotations.Nullable Object minTimeValue,
-        @org.jetbrains.annotations.Nullable Object maxTimeValue) {
-        return "segment";
-      }
-    });
+//     segmentGeneratorConfig.setSegmentNameGenerator(new SegmentNameGenerator() {
+//       @Override
+//       public String generateSegmentName(int sequenceId, @org.jetbrains.annotations.Nullable Object minTimeValue,
+//         @org.jetbrains.annotations.Nullable Object maxTimeValue) {
+//         return "segment" + sequenceId;
+//       }
+//     });
 
     // Build the segment
     SegmentIndexCreationDriver driver = new SegmentIndexCreationDriverImpl();

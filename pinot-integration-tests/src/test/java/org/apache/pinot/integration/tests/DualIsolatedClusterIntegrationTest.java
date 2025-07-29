@@ -82,9 +82,12 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   private static final String SCHEMA_FILE = "On_Time_On_Time_Performance_2014_100k_subset_nonulls.schema";
   private static final String TIME_COLUMN = "DaysSinceEpoch";
   private static final String FEDERATION_TABLE = "federation_test_table";
+  private static final String FEDERATION_TABLE_2 = "federation_test_table_2";
   private static final String STRING_COLUMN = "OriginCityName";
+  private static final String JOIN_COLUMN = "OriginCityName";
   private static final int CLUSTER_1_SIZE = 1000;
-  private static final int CLUSTER_2_SIZE = 1500;
+  private static final int CLUSTER_2_SIZE = 1000;
+  private static final int SEGMENTS_PER_CLUSTER = 3;
   private static final String CLUSTER_1_PREFIX = "cluster1_OriginCityName_";
   private static final String CLUSTER_2_PREFIX = "cluster2_OriginCityName_";
 
@@ -99,6 +102,8 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   // Test data
   private List<File> _cluster1AvroFiles;
   private List<File> _cluster2AvroFiles;
+  private List<File> _cluster1AvroFiles2;
+  private List<File> _cluster2AvroFiles2;
 
   /**
    * Cluster configuration helper class
@@ -198,9 +203,9 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     cluster.brokerPort = findAvailablePort(cluster.controllerPort + 1000);
     startBroker(cluster, secondaryCluster, config);
 
-    // Start Server
+    // Start Server with MSE enabled
     cluster.serverPort = findAvailablePort(cluster.brokerPort + 1000);
-    startServer(cluster, config);
+    startServerWithMSE(cluster, config);
 
     LOGGER.info("Cluster {} started successfully", config.name);
   }
@@ -260,6 +265,27 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     serverConfig.setProperty(Server.CONFIG_OF_ENABLE_THREAD_CPU_TIME_MEASUREMENT, true);
     serverConfig.setProperty(CommonConstants.CONFIG_OF_TIMEZONE, "UTC");
     serverConfig.setProperty(Helix.CONFIG_OF_MULTI_STAGE_ENGINE_ENABLED, false);
+
+    cluster.serverStarter = createServerStarter();
+    cluster.serverStarter.init(serverConfig);
+    cluster.serverStarter.start();
+  }
+
+  private void startServerWithMSE(ClusterComponents cluster, ClusterConfig config) throws Exception {
+    PinotConfiguration serverConfig = new PinotConfiguration();
+    serverConfig.setProperty(Helix.CONFIG_OF_ZOOKEEPR_SERVER, cluster.zkUrl);
+    serverConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config.name);
+    serverConfig.setProperty(Helix.KEY_OF_SERVER_NETTY_HOST, ControllerTest.LOCAL_HOST);
+    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_DATA_DIR, cluster.tempDir + "/dataDir");
+    serverConfig.setProperty(Server.CONFIG_OF_INSTANCE_SEGMENT_TAR_DIR, cluster.tempDir + "/segmentTar");
+    serverConfig.setProperty(Server.CONFIG_OF_SEGMENT_FORMAT_VERSION, "v3");
+    serverConfig.setProperty(Server.CONFIG_OF_SHUTDOWN_ENABLE_QUERY_CHECK, false);
+    serverConfig.setProperty(Server.CONFIG_OF_ADMIN_API_PORT, findAvailablePort(cluster.serverPort));
+    serverConfig.setProperty(Helix.KEY_OF_SERVER_NETTY_PORT, findAvailablePort(cluster.serverPort + 1));
+    serverConfig.setProperty(Server.CONFIG_OF_GRPC_PORT, findAvailablePort(cluster.serverPort + 2));
+    serverConfig.setProperty(Server.CONFIG_OF_ENABLE_THREAD_CPU_TIME_MEASUREMENT, true);
+    serverConfig.setProperty(CommonConstants.CONFIG_OF_TIMEZONE, "UTC");
+    serverConfig.setProperty(Helix.CONFIG_OF_MULTI_STAGE_ENGINE_ENABLED, true);
 
     cluster.serverStarter = createServerStarter();
     cluster.serverStarter.init(serverConfig);
@@ -429,6 +455,45 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     assertFalse(cluster2String.contains("cluster1_"));
   }
 
+  @Test
+  public void testMSEFederationJoin() throws Exception {
+    // Setup both tables
+    setupFederationTable();
+    setupFederationTable2();
+    cleanSegmentDirs();
+
+    // Generate data with multiple segments for second table
+    _cluster1AvroFiles = createAvroData(CLUSTER_1_SIZE, 1);
+    _cluster2AvroFiles = createAvroData(CLUSTER_2_SIZE, 2);
+    _cluster1AvroFiles2 = createAvroDataMultipleSegments(CLUSTER_1_SIZE, 1, SEGMENTS_PER_CLUSTER);
+    _cluster2AvroFiles2 = createAvroDataMultipleSegments(CLUSTER_2_SIZE, 2, SEGMENTS_PER_CLUSTER);
+
+    // Load data into both tables
+    loadDataIntoCluster(_cluster1AvroFiles, FEDERATION_TABLE, _cluster1);
+    loadDataIntoCluster(_cluster2AvroFiles, FEDERATION_TABLE, _cluster2);
+    loadDataIntoCluster(_cluster1AvroFiles2, FEDERATION_TABLE_2, _cluster1);
+    loadDataIntoCluster(_cluster2AvroFiles2, FEDERATION_TABLE_2, _cluster2);
+
+    // Verify data is loaded
+    long table1Count = getCount(FEDERATION_TABLE, _cluster1);
+    long table2Count = getCount(FEDERATION_TABLE_2, _cluster1);
+    assertTrue(table1Count > 0);
+    assertTrue(table2Count > 0);
+
+    // Test join query with MSE
+    String joinQuery = "SET useMultistageEngine=true; SET usePhysicalOptimizer=true; SET useLiteMode=true; SET runInBroker=true; SELECT t1." + JOIN_COLUMN + ", COUNT(*) as count " +
+        "FROM " + FEDERATION_TABLE + " t1 " +
+        "JOIN " + FEDERATION_TABLE_2 + " t2 ON t1." + JOIN_COLUMN + " = t2." + JOIN_COLUMN + " " +
+        "GROUP BY t1." + JOIN_COLUMN + " LIMIT 10";
+
+    String result = executeQuery(joinQuery, _cluster1);
+    System.out.println("SQL OUTPUT = " + result);
+    assertNotNull(result);
+    assertTrue(result.contains("resultTable"));
+
+    LOGGER.info("MSE Federation Join Test completed successfully");
+  }
+
   private List<File> createAvroData(int dataSize, int clusterId) throws Exception {
     Schema schema = createSchema(SCHEMA_FILE);
     org.apache.avro.Schema avroSchema = createAvroSchema(schema);
@@ -451,6 +516,39 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     }
 
     return List.of(avroFile);
+  }
+
+  private List<File> createAvroDataMultipleSegments(int totalDataSize, int clusterId, int numSegments) throws Exception {
+    Schema schema = createSchema(SCHEMA_FILE);
+    org.apache.avro.Schema avroSchema = createAvroSchema(schema);
+
+    File tempDir = (clusterId == 1) ? _cluster1.tempDir : _cluster2.tempDir;
+    List<File> avroFiles = new ArrayList<>();
+    int dataPerSegment = totalDataSize / numSegments;
+
+    for (int segment = 0; segment < numSegments; segment++) {
+      File avroFile = new File(tempDir, "cluster" + clusterId + "_data_segment" + segment + ".avro");
+
+      try (DataFileWriter<GenericData.Record> fileWriter = new DataFileWriter<>(new GenericDatumWriter<>(avroSchema))) {
+        fileWriter.create(avroSchema, avroFile);
+
+        int startIndex = segment * dataPerSegment;
+        int endIndex = (segment == numSegments - 1) ? totalDataSize : (segment + 1) * dataPerSegment;
+
+        for (int i = startIndex; i < endIndex; i++) {
+          GenericData.Record record = new GenericData.Record(avroSchema);
+          for (FieldSpec fieldSpec : schema.getAllFieldSpecs()) {
+            String fieldName = fieldSpec.getName();
+            Object value = generateFieldValue(fieldName, i, clusterId, fieldSpec.getDataType());
+            record.put(fieldName, value);
+          }
+          fileWriter.append(record);
+        }
+      }
+      avroFiles.add(avroFile);
+    }
+
+    return avroFiles;
   }
 
   private org.apache.avro.Schema createAvroSchema(Schema schema) {
@@ -482,11 +580,11 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     int baseValue = index + (clusterId * 10000);
 
     switch (dataType) {
-      case INT: return baseValue;
+      case INT: return index + 10000;
       case LONG: return (long) baseValue;
       case FLOAT: return (float) (baseValue + 0.1);
       case DOUBLE: return (double) (baseValue + 0.1);
-      case STRING: return "cluster" + clusterId + "_" + fieldName + "_";
+      case STRING: return "cluster" + "_" + fieldName + "_" + index;
       case BOOLEAN: return (baseValue % 2) == 0;
       default: return "cluster" + clusterId + "_" + fieldName + "_" + baseValue;
     }
@@ -538,6 +636,23 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
 
     TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE)
         .setTableName(FEDERATION_TABLE)
+        .setTimeColumnName(TIME_COLUMN)
+        .build();
+    addTableConfigToCluster(tableConfig, _cluster1.controllerBaseApiUrl);
+    addTableConfigToCluster(tableConfig, _cluster2.controllerBaseApiUrl);
+  }
+
+  private void setupFederationTable2() throws Exception {
+    dropTableAndSchemaIfExists(FEDERATION_TABLE_2, _cluster1.controllerBaseApiUrl);
+    dropTableAndSchemaIfExists(FEDERATION_TABLE_2, _cluster2.controllerBaseApiUrl);
+
+    Schema schema = createSchema(SCHEMA_FILE);
+    schema.setSchemaName(FEDERATION_TABLE_2);
+    addSchemaToCluster(schema, _cluster1.controllerBaseApiUrl);
+    addSchemaToCluster(schema, _cluster2.controllerBaseApiUrl);
+
+    TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE)
+        .setTableName(FEDERATION_TABLE_2)
         .setTimeColumnName(TIME_COLUMN)
         .build();
     addTableConfigToCluster(tableConfig, _cluster1.controllerBaseApiUrl);

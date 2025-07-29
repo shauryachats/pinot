@@ -418,7 +418,7 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
       // TODO: decouple protocol and engine selection.
       queryDispatcher = createQueryDispatcher(_brokerConf);
       multiStageBrokerRequestHandler =
-          new MultiStageBrokerRequestHandler(_brokerConf, brokerId, _routingManager, _accessControlFactory,
+          new MultiStageBrokerRequestHandler(_brokerConf, brokerId, routingManager, _accessControlFactory,
               _queryQuotaManager, tableCache, _multiStageQueryThrottler, _failureDetector);
     }
     TimeSeriesRequestHandler timeSeriesRequestHandler = null;
