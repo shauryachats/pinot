@@ -72,7 +72,7 @@ public class TimeSeriesRequestHandler extends BaseBrokerRequestHandler {
   public TimeSeriesRequestHandler(PinotConfiguration config, String brokerId, BrokerRoutingManager routingManager,
       AccessControlFactory accessControlFactory, QueryQuotaManager queryQuotaManager, TableCache tableCache,
       QueryDispatcher queryDispatcher, ThreadResourceUsageAccountant accountant) {
-    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant);
+    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant, null);
     _queryEnvironment = new TimeSeriesQueryEnvironment(config, routingManager, tableCache);
     _queryEnvironment.init(config);
     _queryDispatcher = queryDispatcher;

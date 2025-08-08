@@ -55,6 +55,7 @@ import org.apache.pinot.broker.requesthandler.SingleConnectionBrokerRequestHandl
 import org.apache.pinot.broker.requesthandler.TimeSeriesRequestHandler;
 import org.apache.pinot.broker.routing.BrokerRoutingManager;
 import org.apache.pinot.broker.routing.FederatedRoutingManager;
+import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.common.Utils;
 import org.apache.pinot.common.config.NettyConfig;
 import org.apache.pinot.common.config.TlsConfig;
@@ -141,6 +142,7 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
   protected HelixManager _secondarySpectatorHelixManager;
   protected HelixAdmin _helixAdmin;
   protected ZkHelixPropertyStore<ZNRecord> _propertyStore;
+  protected ZkHelixPropertyStore<ZNRecord> _secondaryPropertyStore;
   protected HelixDataAccessor _helixDataAccessor;
   protected PinotMetricsRegistry _metricsRegistry;
   protected BrokerMetrics _brokerMetrics;
@@ -172,7 +174,7 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     // Remove all white-spaces from the list of zkServers (if any).
     _zkServers = brokerConf.getProperty(Helix.CONFIG_OF_ZOOKEEPER_SERVER).replaceAll("\\s+", "");
     _clusterName = brokerConf.getProperty(Helix.CONFIG_OF_CLUSTER_NAME);
-    _secondaryZkServers = brokerConf.getProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPR_SERVER);
+    _secondaryZkServers = brokerConf.getProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPER_SERVER);
     if (_secondaryZkServers != null) {
       _secondaryZkServers = _secondaryZkServers.replaceAll("\\s+", "");
       _secondaryClusterName = brokerConf.getProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME);
@@ -314,6 +316,8 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
           HelixManagerFactory.getZKHelixManager(_secondaryClusterName, _instanceId, InstanceType.SPECTATOR,
               _secondaryZkServers);
       _secondarySpectatorHelixManager.connect();
+
+      _secondaryPropertyStore = _secondarySpectatorHelixManager.getHelixPropertyStore();
     }
     _helixAdmin = _spectatorHelixManager.getClusterManagmentTool();
     _propertyStore = _spectatorHelixManager.getHelixPropertyStore();
@@ -364,7 +368,15 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     FunctionRegistry.init();
     boolean caseInsensitive =
         _brokerConf.getProperty(Helix.ENABLE_CASE_INSENSITIVE_KEY, Helix.DEFAULT_ENABLE_CASE_INSENSITIVE);
+
+    Map<String, TableCache> tableCacheMap = new HashMap<>();
     TableCache tableCache = new TableCache(_propertyStore, caseInsensitive);
+    tableCacheMap.put(_clusterName, tableCache);
+    if (_secondaryPropertyStore != null) {
+      TableCache secondaryTableCache = new TableCache(_secondaryPropertyStore, caseInsensitive);
+      tableCacheMap.put(_secondaryClusterName, secondaryTableCache);
+    }
+    FederationProvider federationProvider = new FederationProvider(tableCacheMap);
 
     LOGGER.info("Initializing Broker Event Listener Factory");
     BrokerQueryEventListenerFactory.init(_brokerConf.subset(Broker.EVENT_LISTENER_CONFIG_PREFIX));
@@ -399,7 +411,7 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
         ? _federatedRoutingManager : _routingManager;
     if (brokerRequestHandlerType.equalsIgnoreCase(Broker.GRPC_BROKER_REQUEST_HANDLER_TYPE)) {
       singleStageBrokerRequestHandler = new GrpcBrokerRequestHandler(_brokerConf, brokerId, routingManager,
-          _accessControlFactory, _queryQuotaManager, tableCache, _failureDetector, _resourceUsageAccountant);
+          _accessControlFactory, _queryQuotaManager, tableCache, _failureDetector, _resourceUsageAccountant, federationProvider);
     } else {
       // Default request handler type, i.e. netty
       NettyConfig nettyDefaults = NettyConfig.extractNettyConfig(_brokerConf, Broker.BROKER_NETTY_PREFIX);
@@ -411,7 +423,7 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
       singleStageBrokerRequestHandler =
           new SingleConnectionBrokerRequestHandler(_brokerConf, brokerId, routingManager, _accessControlFactory,
               _queryQuotaManager, tableCache, nettyDefaults, tlsDefaults, _serverRoutingStatsManager,
-              _failureDetector, _resourceUsageAccountant);
+              _failureDetector, _resourceUsageAccountant, federationProvider);
     }
     MultiStageBrokerRequestHandler multiStageBrokerRequestHandler = null;
     QueryDispatcher queryDispatcher = null;
@@ -424,7 +436,8 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
       queryDispatcher = createQueryDispatcher(_brokerConf);
       multiStageBrokerRequestHandler =
           new MultiStageBrokerRequestHandler(_brokerConf, brokerId, routingManager, _accessControlFactory,
-              _queryQuotaManager, tableCache, _multiStageQueryThrottler, _failureDetector, _resourceUsageAccountant);
+              _queryQuotaManager, tableCache, _multiStageQueryThrottler, _failureDetector, _resourceUsageAccountant,
+              federationProvider);
     }
     TimeSeriesRequestHandler timeSeriesRequestHandler = null;
     if (StringUtils.isNotBlank(_brokerConf.getProperty(PinotTimeSeriesConfiguration.getEnabledLanguagesConfigKey()))) {

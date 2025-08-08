@@ -42,6 +42,7 @@ import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.broker.broker.AccessControlFactory;
 import org.apache.pinot.broker.querylog.QueryLogger;
 import org.apache.pinot.broker.queryquota.QueryQuotaManager;
+import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.common.config.provider.TableCache;
 import org.apache.pinot.common.metrics.BrokerMeter;
 import org.apache.pinot.common.metrics.BrokerMetrics;
@@ -91,6 +92,7 @@ public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
   @Nullable
   protected final String _enableNullHandling;
   protected final ThreadResourceUsageAccountant _resourceUsageAccountant;
+  protected final FederationProvider _federationProvider;
 
   /**
    * Maps broker-generated query id to the query string.
@@ -103,13 +105,14 @@ public abstract class BaseBrokerRequestHandler implements BrokerRequestHandler {
 
   public BaseBrokerRequestHandler(PinotConfiguration config, String brokerId, RoutingManager routingManager,
       AccessControlFactory accessControlFactory, QueryQuotaManager queryQuotaManager, TableCache tableCache,
-      ThreadResourceUsageAccountant resourceUsageAccountant) {
+      ThreadResourceUsageAccountant resourceUsageAccountant, FederationProvider federationProvider) {
     _config = config;
     _brokerId = brokerId;
     _routingManager = routingManager;
     _accessControlFactory = accessControlFactory;
     _queryQuotaManager = queryQuotaManager;
     _tableCache = tableCache;
+    _federationProvider = federationProvider;
     _brokerMetrics = BrokerMetrics.get();
     _brokerQueryEventListener = BrokerQueryEventListenerFactory.getBrokerQueryEventListener();
     _trackedHeaders = BrokerQueryEventListenerFactory.getTrackedHeaders();

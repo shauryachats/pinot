@@ -57,6 +57,7 @@ import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.broker.broker.AccessControlFactory;
 import org.apache.pinot.broker.querylog.QueryLogger;
 import org.apache.pinot.broker.queryquota.QueryQuotaManager;
+import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.common.config.provider.TableCache;
 import org.apache.pinot.common.http.MultiHttpRequest;
 import org.apache.pinot.common.http.MultiHttpRequestResponse;
@@ -171,8 +172,8 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
 
   public BaseSingleStageBrokerRequestHandler(PinotConfiguration config, String brokerId,
       RoutingManager routingManager, AccessControlFactory accessControlFactory,
-      QueryQuotaManager queryQuotaManager, TableCache tableCache, ThreadResourceUsageAccountant accountant) {
-    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant);
+      QueryQuotaManager queryQuotaManager, TableCache tableCache, ThreadResourceUsageAccountant accountant, FederationProvider federationProvider) {
+    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant, federationProvider);
     _disableGroovy = _config.getProperty(Broker.DISABLE_GROOVY, Broker.DEFAULT_DISABLE_GROOVY);
     _useApproximateFunction = _config.getProperty(Broker.USE_APPROXIMATE_FUNCTION, false);
     _defaultHllLog2m = _config.getProperty(CommonConstants.Helix.DEFAULT_HYPERLOGLOG_LOG2M_KEY,
@@ -203,7 +204,7 @@ public abstract class BaseSingleStageBrokerRequestHandler extends BaseBrokerRequ
         Broker.DEFAULT_USE_MSE_TO_FILL_EMPTY_RESPONSE_SCHEMA);
 
     _implicitHybridTableRouteProvider = new ImplicitHybridTableRouteProvider();
-    _logicalTableRouteProvider = new LogicalTableRouteProvider();
+    _logicalTableRouteProvider = new LogicalTableRouteProvider(federationProvider);
 
     LOGGER.info("Initialized {} with broker id: {}, timeout: {}ms, query response limit: {}, "
             + "default query limit {}, query log max length: {}, query log max rate: {}, query cancellation "

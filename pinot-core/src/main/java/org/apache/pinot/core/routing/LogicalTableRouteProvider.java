@@ -29,6 +29,7 @@ import org.apache.pinot.core.routing.timeboundary.TimeBoundaryStrategyService;
 import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.config.table.TableType;
 import org.apache.pinot.spi.data.LogicalTableConfig;
+import org.apache.pinot.spi.data.PhysicalTableConfig;
 import org.apache.pinot.spi.utils.builder.TableNameBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,15 @@ import org.slf4j.LoggerFactory;
 
 public class LogicalTableRouteProvider implements TableRouteProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(LogicalTableRouteProvider.class);
+  private final FederationProvider federationProvider;
+
+  public LogicalTableRouteProvider() {
+    this(null);
+  }
+
+  public LogicalTableRouteProvider(FederationProvider federationProvider) {
+    this.federationProvider = federationProvider;
+  }
 
   @Override
   public TableRouteInfo getTableRouteInfo(String tableName, TableCache tableCache, RoutingManager routingManager) {
@@ -56,11 +66,17 @@ public class LogicalTableRouteProvider implements TableRouteProvider {
 
     List<ImplicitHybridTableRouteInfo> offlineTables = new ArrayList<>();
     List<ImplicitHybridTableRouteInfo> realtimeTables = new ArrayList<>();
-    for (String physicalTableName : logicalTableConfig.getPhysicalTableConfigMap().keySet()) {
+    for (var physicalTableEntrySet : logicalTableConfig.getPhysicalTableConfigMap().entrySet()) {
+      String physicalTableName = physicalTableEntrySet.getKey();
+      PhysicalTableConfig physicalTableConfig = physicalTableEntrySet.getValue();
       TableType tableType = TableNameBuilder.getTableTypeFromTableName(physicalTableName);
+      TableCache selectedTableCache = tableCache;
+      if (federationProvider != null) {
+        selectedTableCache = federationProvider.getTableCacheMap().getOrDefault(physicalTableConfig.getClusterName(), tableCache);
+      }
       Preconditions.checkNotNull(tableType);
       ImplicitHybridTableRouteInfo physicalTableInfo = new ImplicitHybridTableRouteInfo();
-      routeProvider.fillTableConfigMetadata(physicalTableInfo, physicalTableName, tableCache);
+      routeProvider.fillTableConfigMetadata(physicalTableInfo, physicalTableName, selectedTableCache);
 
       if (physicalTableInfo.isExists()) {
         if (tableType == TableType.OFFLINE) {

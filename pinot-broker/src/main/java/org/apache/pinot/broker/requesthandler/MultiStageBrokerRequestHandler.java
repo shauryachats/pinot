@@ -51,6 +51,7 @@ import org.apache.pinot.broker.api.AccessControl;
 import org.apache.pinot.broker.broker.AccessControlFactory;
 import org.apache.pinot.broker.querylog.QueryLogger;
 import org.apache.pinot.broker.queryquota.QueryQuotaManager;
+import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.common.config.TlsConfig;
 import org.apache.pinot.common.config.provider.TableCache;
 import org.apache.pinot.common.failuredetector.FailureDetector;
@@ -135,8 +136,8 @@ public class MultiStageBrokerRequestHandler extends BaseBrokerRequestHandler {
   public MultiStageBrokerRequestHandler(PinotConfiguration config, String brokerId, RoutingManager routingManager,
       AccessControlFactory accessControlFactory, QueryQuotaManager queryQuotaManager, TableCache tableCache,
       MultiStageQueryThrottler queryThrottler, FailureDetector failureDetector,
-      ThreadResourceUsageAccountant accountant) {
-    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant);
+      ThreadResourceUsageAccountant accountant, FederationProvider federationProvider) {
+    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant, federationProvider);
     String hostname = config.getProperty(CommonConstants.MultiStageQueryRunner.KEY_OF_QUERY_RUNNER_HOSTNAME);
     int port = Integer.parseInt(config.getProperty(CommonConstants.MultiStageQueryRunner.KEY_OF_QUERY_RUNNER_PORT));
     _workerManager = new WorkerManager(_brokerId, hostname, port, _routingManager);

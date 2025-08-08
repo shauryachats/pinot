@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
 import org.apache.pinot.broker.broker.AccessControlFactory;
 import org.apache.pinot.broker.queryquota.QueryQuotaManager;
+import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.common.config.NettyConfig;
 import org.apache.pinot.common.config.TlsConfig;
 import org.apache.pinot.common.config.provider.TableCache;
@@ -73,8 +74,8 @@ public class SingleConnectionBrokerRequestHandler extends BaseSingleStageBrokerR
       RoutingManager routingManager, AccessControlFactory accessControlFactory,
       QueryQuotaManager queryQuotaManager, TableCache tableCache, NettyConfig nettyConfig, TlsConfig tlsConfig,
       ServerRoutingStatsManager serverRoutingStatsManager, FailureDetector failureDetector,
-      ThreadResourceUsageAccountant accountant) {
-    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant);
+      ThreadResourceUsageAccountant accountant, FederationProvider federationProvider) {
+    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant, federationProvider);
     _brokerReduceService = new BrokerReduceService(_config, accountant);
     _queryRouter = new QueryRouter(_brokerId, _brokerMetrics, nettyConfig, tlsConfig, serverRoutingStatsManager);
     _failureDetector = failureDetector;

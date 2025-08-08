@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.pinot.integration.tests;
+package org.apache.pinot.integration.tests.federation;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,11 +42,16 @@ import org.apache.pinot.common.utils.FileUploadDownloadClient;
 import org.apache.pinot.common.utils.ZkStarter;
 import org.apache.pinot.controller.BaseControllerStarter;
 import org.apache.pinot.controller.ControllerConf;
+import org.apache.pinot.controller.helix.ControllerRequestClient;
 import org.apache.pinot.controller.helix.ControllerTest;
+import org.apache.pinot.integration.tests.ClusterIntegrationTestUtils;
+import org.apache.pinot.integration.tests.ClusterTest;
 import org.apache.pinot.server.starter.helix.BaseServerStarter;
 import org.apache.pinot.spi.config.table.TableConfig;
 import org.apache.pinot.spi.config.table.TableType;
 import org.apache.pinot.spi.data.FieldSpec;
+import org.apache.pinot.spi.data.LogicalTableConfig;
+import org.apache.pinot.spi.data.PhysicalTableConfig;
 import org.apache.pinot.spi.data.Schema;
 import org.apache.pinot.spi.env.PinotConfiguration;
 import org.apache.pinot.spi.utils.CommonConstants;
@@ -55,7 +60,10 @@ import org.apache.pinot.spi.utils.CommonConstants.Helix;
 import org.apache.pinot.spi.utils.CommonConstants.Server;
 import org.apache.pinot.spi.utils.JsonUtils;
 import org.apache.pinot.spi.utils.NetUtils;
+import org.apache.pinot.spi.utils.builder.ControllerRequestURLBuilder;
+import org.apache.pinot.spi.utils.builder.LogicalTableConfigBuilder;
 import org.apache.pinot.spi.utils.builder.TableConfigBuilder;
+import org.apache.pinot.spi.utils.builder.TableNameBuilder;
 import org.apache.pinot.util.TestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,15 +91,24 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
   private static final String FEDERATION_TABLE_2 = "federation_test_table_2";
   private static final String STRING_COLUMN = "OriginCityName";
   private static final String JOIN_COLUMN = "OriginCityName";
-  private static final int CLUSTER_1_SIZE = 1000;
+  private static final int CLUSTER_1_SIZE = 1500;
   private static final int CLUSTER_2_SIZE = 1000;
   private static final int SEGMENTS_PER_CLUSTER = 3;
   private static final String CLUSTER_1_PREFIX = "cluster1_OriginCityName_";
   private static final String CLUSTER_2_PREFIX = "cluster2_OriginCityName_";
+  private static final String DEFAULT_TENANT = "DefaultTenant";
+
+  private static final String CLUSTER_1_NAME = "DualIsolatedCluster1";
+  private static final String CLUSTER_2_NAME = "DualIsolatedCluster2";
+
+  private static final String LOGICAL_FEDERATION_CLUSTER_1_TABLE = "logical_federation_table_cluster1";
+  private static final String LOGICAL_FEDERATION_CLUSTER_2_TABLE = "logical_federation_table_cluster2";
 
   // Cluster configurations
-  private static final ClusterConfig CLUSTER_1_CONFIG = new ClusterConfig("DualIsolatedCluster1", 30000);
-  private static final ClusterConfig CLUSTER_2_CONFIG = new ClusterConfig("DualIsolatedCluster2", 40000);
+  private static final ClusterConfig CLUSTER_1_CONFIG = new ClusterConfig(CLUSTER_1_NAME, 30000);
+  private static final ClusterConfig CLUSTER_2_CONFIG = new ClusterConfig(CLUSTER_2_NAME, 40000);
+  private static final String LOGICAL_TABLE_NAME = "logical_table";
+  private static final String LOGICAL_TABLE_NAME_2 = "logical_table_2";
 
   // Cluster components
   private ClusterComponents _cluster1;
@@ -231,12 +248,12 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
       ClusterConfig config) throws Exception {
     PinotConfiguration brokerConfig = new PinotConfiguration();
     brokerConfig.setProperty(Helix.CONFIG_OF_ZOOKEEPER_SERVER, cluster._zkUrl);
-    if (config._name.equalsIgnoreCase("DualIsolatedCluster2")) {
+    if (config._name.equalsIgnoreCase(CLUSTER_2_NAME)) {
       brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPER_SERVER, secondaryCluster._zkUrl);
-      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME, "DualIsolatedCluster1");
+      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME, CLUSTER_1_NAME);
     } else {
       brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_ZOOKEEPER_SERVER, secondaryCluster._zkUrl);
-      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME, "DualIsolatedCluster2");
+      brokerConfig.setProperty(Helix.CONFIG_OF_SECONDARY_CLUSTER_NAME, CLUSTER_2_NAME);
     }
     brokerConfig.setProperty(Helix.CONFIG_OF_CLUSTER_NAME, config._name);
     brokerConfig.setProperty(Broker.CONFIG_OF_BROKER_HOSTNAME, ControllerTest.LOCAL_HOST);
@@ -417,6 +434,36 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     // Verify counts
     long cluster1Count = getCount(FEDERATION_TABLE, _cluster1);
     long cluster2Count = getCount(FEDERATION_TABLE, _cluster2);
+
+    assertEquals(cluster1Count, CLUSTER_1_SIZE + CLUSTER_2_SIZE);
+    assertEquals(cluster2Count, CLUSTER_2_SIZE + CLUSTER_1_SIZE);
+  }
+
+  @Test
+  public void testLogicalFederationTwoOfflineTablesSSE() throws Exception {
+    setupLogicalFederationTables();
+    createLogicalTable(CLUSTER_1_NAME, SCHEMA_FILE, Map.of(
+            LOGICAL_FEDERATION_CLUSTER_1_TABLE + "_OFFLINE", new PhysicalTableConfig(CLUSTER_1_NAME),
+            LOGICAL_FEDERATION_CLUSTER_2_TABLE + "_OFFLINE", new PhysicalTableConfig(CLUSTER_2_NAME)
+        ), DEFAULT_TENANT,
+        _cluster1._controllerBaseApiUrl, LOGICAL_TABLE_NAME);
+    createLogicalTable(CLUSTER_2_NAME, SCHEMA_FILE, Map.of(
+            LOGICAL_FEDERATION_CLUSTER_1_TABLE + "_OFFLINE", new PhysicalTableConfig(CLUSTER_1_NAME),
+            LOGICAL_FEDERATION_CLUSTER_2_TABLE + "_OFFLINE", new PhysicalTableConfig(CLUSTER_2_NAME)
+        ), DEFAULT_TENANT,
+        _cluster2._controllerBaseApiUrl, LOGICAL_TABLE_NAME);
+    cleanSegmentDirs();
+
+    // Generate and load data
+    _cluster1AvroFiles = createAvroData(CLUSTER_1_SIZE, 1);
+    _cluster2AvroFiles = createAvroData(CLUSTER_2_SIZE, 2);
+
+    loadDataIntoCluster(_cluster1AvroFiles, LOGICAL_FEDERATION_CLUSTER_1_TABLE, _cluster1);
+    loadDataIntoCluster(_cluster2AvroFiles, LOGICAL_FEDERATION_CLUSTER_2_TABLE, _cluster2);
+
+    // Verify counts
+    long cluster1Count = getCount(LOGICAL_TABLE_NAME, _cluster1);
+    long cluster2Count = getCount(LOGICAL_TABLE_NAME, _cluster2);
 
     assertEquals(cluster1Count, CLUSTER_1_SIZE + CLUSTER_2_SIZE);
     assertEquals(cluster2Count, CLUSTER_2_SIZE + CLUSTER_1_SIZE);
@@ -644,6 +691,32 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     addTableConfigToCluster(tableConfig, _cluster2._controllerBaseApiUrl);
   }
 
+  private void setupLogicalFederationTables() throws Exception {
+    dropTableAndSchemaIfExists(LOGICAL_FEDERATION_CLUSTER_1_TABLE, _cluster1._controllerBaseApiUrl);
+    dropTableAndSchemaIfExists(LOGICAL_FEDERATION_CLUSTER_2_TABLE, _cluster2._controllerBaseApiUrl);
+
+    Schema schema = createSchema(SCHEMA_FILE);
+    schema.setSchemaName(LOGICAL_FEDERATION_CLUSTER_1_TABLE);
+    addSchemaToCluster(schema, _cluster1._controllerBaseApiUrl);
+
+    schema.setSchemaName(LOGICAL_FEDERATION_CLUSTER_2_TABLE);
+    addSchemaToCluster(schema, _cluster2._controllerBaseApiUrl);
+
+    TableConfig tableConfig = new TableConfigBuilder(TableType.OFFLINE)
+        .setTableName(LOGICAL_FEDERATION_CLUSTER_1_TABLE)
+        .setTimeColumnName(TIME_COLUMN)
+        .build();
+    addTableConfigToCluster(tableConfig, _cluster1._controllerBaseApiUrl);
+
+    tableConfig = new TableConfigBuilder(TableType.OFFLINE)
+        .setTableName(LOGICAL_FEDERATION_CLUSTER_2_TABLE)
+        .setTimeColumnName(TIME_COLUMN)
+        .build();
+    addTableConfigToCluster(tableConfig, _cluster2._controllerBaseApiUrl);
+  }
+
+
+
   private void setupFederationTable2() throws Exception {
     dropTableAndSchemaIfExists(FEDERATION_TABLE_2, _cluster1._controllerBaseApiUrl);
     dropTableAndSchemaIfExists(FEDERATION_TABLE_2, _cluster2._controllerBaseApiUrl);
@@ -799,4 +872,55 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
 
     LOGGER.info("Dual isolated Pinot clusters torn down successfully");
   }
+
+  /** Logical table code **/
+  protected void createLogicalTable(String clusterName, String schemaFile, Map<String, PhysicalTableConfig> physicalTableConfigMap, String brokerTenant, String controllerBaseApiUrl, String logicalTable)
+      throws IOException {
+    ControllerRequestURLBuilder controllerRequestURLBuilder =
+        ControllerRequestURLBuilder.baseUrl(controllerBaseApiUrl);
+    ControllerRequestClient controllerRequestClient =
+        new ControllerRequestClient(ControllerRequestURLBuilder.baseUrl(controllerBaseApiUrl), getHttpClient(),
+            getControllerRequestClientHeaders());
+    String addLogicalTableUrl = controllerRequestURLBuilder.forLogicalTableCreate();
+    Schema logicalTableSchema = createSchema(schemaFile);
+    logicalTableSchema.setSchemaName(logicalTable);
+    controllerRequestClient.addSchema(logicalTableSchema);
+    LogicalTableConfig logicalTableConfig =
+        getLogicalTableConfig(clusterName, logicalTable, physicalTableConfigMap, brokerTenant);
+    String resp =
+        ControllerTest.sendPostRequest(addLogicalTableUrl, logicalTableConfig.toSingleLineJsonString(), Map.of());
+    assertEquals(resp, "{\"unrecognizedProperties\":{},\"status\":\"" + logicalTable
+        + " logical table successfully added.\"}");
+  }
+
+  public LogicalTableConfig getLogicalTableConfig(String clusterName, String tableName, Map<String, PhysicalTableConfig> physicalTableConfigMap,
+      String brokerTenant) {
+    String offlineTableName =
+        physicalTableConfigMap.entrySet().stream()
+            .filter(x -> clusterName.equals(x.getValue().getClusterName()))
+            .filter(x -> TableNameBuilder.isOfflineTableResource(x.getKey()))
+            .findFirst()
+            .map(Map.Entry::getKey)
+            .orElse(null);
+    String realtimeTableName =
+        physicalTableConfigMap.entrySet().stream()
+            .filter(x -> clusterName.equals(x.getValue().getClusterName()))
+            .filter(x -> TableNameBuilder.isRealtimeTableResource(x.getKey()))
+            .findFirst()
+            .map(Map.Entry::getKey)
+            .orElse(null);
+    LogicalTableConfigBuilder builder =
+        new LogicalTableConfigBuilder().setTableName(tableName)
+            .setBrokerTenant(brokerTenant)
+            .setRefOfflineTableName(offlineTableName)
+            .setRefRealtimeTableName(realtimeTableName)
+            .setPhysicalTableConfigMap(physicalTableConfigMap);
+//    if (!getOfflineTableNames().isEmpty() && !getRealtimeTableNames().isEmpty()) {
+//      builder.setTimeBoundaryConfig(
+//          new TimeBoundaryConfig("min", Map.of("includedTables", getTimeBoundaryTable()))
+//      );
+//    }
+    return builder.build();
+  }
+
 }

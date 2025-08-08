@@ -173,7 +173,7 @@ public class LiteralOnlyBrokerRequestTest {
     SingleConnectionBrokerRequestHandler requestHandler =
         new SingleConnectionBrokerRequestHandler(new PinotConfiguration(), "testBrokerId", null, ACCESS_CONTROL_FACTORY,
             null, null, null, null, mock(ServerRoutingStatsManager.class), mock(FailureDetector.class),
-            new Tracing.DefaultThreadResourceUsageAccountant());
+            new Tracing.DefaultThreadResourceUsageAccountant(), null);
 
     long randNum = RANDOM.nextLong();
     byte[] randBytes = new byte[12];
@@ -198,7 +198,7 @@ public class LiteralOnlyBrokerRequestTest {
     SingleConnectionBrokerRequestHandler requestHandler =
         new SingleConnectionBrokerRequestHandler(new PinotConfiguration(), "testBrokerId", null, ACCESS_CONTROL_FACTORY,
             null, null, null, null, mock(ServerRoutingStatsManager.class), mock(FailureDetector.class),
-            new Tracing.DefaultThreadResourceUsageAccountant());
+            new Tracing.DefaultThreadResourceUsageAccountant(), null);
     long currentTsMin = System.currentTimeMillis();
     BrokerResponse brokerResponse = requestHandler.handleRequest(
         "SELECT now() AS currentTs, fromDateTime('2020-01-01 UTC', 'yyyy-MM-dd z') AS firstDayOf2020");
@@ -353,7 +353,7 @@ public class LiteralOnlyBrokerRequestTest {
     SingleConnectionBrokerRequestHandler requestHandler =
         new SingleConnectionBrokerRequestHandler(new PinotConfiguration(), "testBrokerId", null, ACCESS_CONTROL_FACTORY,
             null, null, null, null, mock(ServerRoutingStatsManager.class), mock(FailureDetector.class),
-            new Tracing.DefaultThreadResourceUsageAccountant());
+            new Tracing.DefaultThreadResourceUsageAccountant(), null);
 
     // Test 1: select constant
     BrokerResponse brokerResponse = requestHandler.handleRequest("EXPLAIN PLAN FOR SELECT 1.5, 'test'");

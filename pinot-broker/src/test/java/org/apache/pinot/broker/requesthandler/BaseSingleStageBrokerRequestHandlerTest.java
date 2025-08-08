@@ -184,7 +184,7 @@ public class BaseSingleStageBrokerRequestHandlerTest {
     BaseSingleStageBrokerRequestHandler requestHandler =
         new BaseSingleStageBrokerRequestHandler(config, "testBrokerId", routingManager,
             new AllowAllAccessControlFactory(), queryQuotaManager, tableCache,
-            new Tracing.DefaultThreadResourceUsageAccountant()) {
+            new Tracing.DefaultThreadResourceUsageAccountant(), null) {
           @Override
           public void start() {
           }

@@ -18,6 +18,7 @@
  */
 package org.apache.pinot.spi.data;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.pinot.spi.config.BaseJsonConfig;
 
 
@@ -26,4 +27,21 @@ import org.apache.pinot.spi.config.BaseJsonConfig;
  * This is empty by design and more docs would be added as features are added.
  */
 public class PhysicalTableConfig extends BaseJsonConfig {
+  @JsonProperty("clusterName")
+  String _clusterName;
+
+  /**
+   * Returns the cluster name for this physical table.
+   *
+   * @return the cluster name
+   */
+  public PhysicalTableConfig() {}
+
+  public PhysicalTableConfig(String clusterName) {
+    _clusterName = clusterName;
+  }
+
+  public String getClusterName() {
+    return _clusterName;
+  }
 }
