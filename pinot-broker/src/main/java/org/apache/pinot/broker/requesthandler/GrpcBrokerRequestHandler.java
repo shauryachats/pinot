@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
 import org.apache.pinot.broker.broker.AccessControlFactory;
 import org.apache.pinot.broker.queryquota.QueryQuotaManager;
-import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.common.config.GrpcConfig;
 import org.apache.pinot.common.config.provider.TableCache;
 import org.apache.pinot.common.failuredetector.FailureDetector;
@@ -38,6 +37,7 @@ import org.apache.pinot.common.response.broker.BrokerResponseNative;
 import org.apache.pinot.common.utils.grpc.ServerGrpcQueryClient;
 import org.apache.pinot.common.utils.grpc.ServerGrpcRequestBuilder;
 import org.apache.pinot.core.query.reduce.StreamingReduceService;
+import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.core.routing.RoutingManager;
 import org.apache.pinot.core.routing.SegmentsToQuery;
 import org.apache.pinot.core.routing.TableRouteInfo;
@@ -66,8 +66,10 @@ public class GrpcBrokerRequestHandler extends BaseSingleStageBrokerRequestHandle
   // TODO: Support TLS
   public GrpcBrokerRequestHandler(PinotConfiguration config, String brokerId, RoutingManager routingManager,
       AccessControlFactory accessControlFactory, QueryQuotaManager queryQuotaManager, TableCache tableCache,
-      FailureDetector failureDetector, ThreadResourceUsageAccountant accountant, FederationProvider federationProvider) {
-    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant, federationProvider);
+      FailureDetector failureDetector, ThreadResourceUsageAccountant accountant,
+      FederationProvider federationProvider) {
+    super(config, brokerId, routingManager, accessControlFactory, queryQuotaManager, tableCache, accountant,
+        federationProvider);
     _streamingReduceService = new StreamingReduceService(config);
     _streamingQueryClient = new PinotServerStreamingQueryClient(GrpcConfig.buildGrpcQueryConfig(config));
     _failureDetector = failureDetector;

@@ -55,7 +55,6 @@ import org.apache.pinot.broker.requesthandler.SingleConnectionBrokerRequestHandl
 import org.apache.pinot.broker.requesthandler.TimeSeriesRequestHandler;
 import org.apache.pinot.broker.routing.BrokerRoutingManager;
 import org.apache.pinot.broker.routing.FederatedRoutingManager;
-import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.common.Utils;
 import org.apache.pinot.common.config.NettyConfig;
 import org.apache.pinot.common.config.TlsConfig;
@@ -79,6 +78,7 @@ import org.apache.pinot.common.utils.tls.TlsUtils;
 import org.apache.pinot.common.version.PinotVersion;
 import org.apache.pinot.core.query.executor.sql.SqlQueryExecutor;
 import org.apache.pinot.core.query.utils.rewriter.ResultRewriterFactory;
+import org.apache.pinot.core.routing.FederationProvider;
 import org.apache.pinot.core.routing.RoutingManager;
 import org.apache.pinot.core.transport.ListenerConfig;
 import org.apache.pinot.core.transport.server.routing.stats.ServerRoutingStatsManager;
@@ -411,7 +411,8 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
         ? _federatedRoutingManager : _routingManager;
     if (brokerRequestHandlerType.equalsIgnoreCase(Broker.GRPC_BROKER_REQUEST_HANDLER_TYPE)) {
       singleStageBrokerRequestHandler = new GrpcBrokerRequestHandler(_brokerConf, brokerId, routingManager,
-          _accessControlFactory, _queryQuotaManager, tableCache, _failureDetector, _resourceUsageAccountant, federationProvider);
+          _accessControlFactory, _queryQuotaManager, tableCache, _failureDetector, _resourceUsageAccountant,
+          federationProvider);
     } else {
       // Default request handler type, i.e. netty
       NettyConfig nettyDefaults = NettyConfig.extractNettyConfig(_brokerConf, Broker.BROKER_NETTY_PREFIX);

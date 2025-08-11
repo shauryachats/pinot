@@ -37,14 +37,14 @@ import org.slf4j.LoggerFactory;
 
 public class LogicalTableRouteProvider implements TableRouteProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(LogicalTableRouteProvider.class);
-  private final FederationProvider federationProvider;
+  private final FederationProvider _federationProvider;
 
   public LogicalTableRouteProvider() {
     this(null);
   }
 
   public LogicalTableRouteProvider(FederationProvider federationProvider) {
-    this.federationProvider = federationProvider;
+    _federationProvider = federationProvider;
   }
 
   @Override
@@ -71,8 +71,9 @@ public class LogicalTableRouteProvider implements TableRouteProvider {
       PhysicalTableConfig physicalTableConfig = physicalTableEntrySet.getValue();
       TableType tableType = TableNameBuilder.getTableTypeFromTableName(physicalTableName);
       TableCache selectedTableCache = tableCache;
-      if (federationProvider != null) {
-        selectedTableCache = federationProvider.getTableCacheMap().getOrDefault(physicalTableConfig.getClusterName(), tableCache);
+      if (_federationProvider != null) {
+        selectedTableCache = _federationProvider.getTableCacheMap()
+            .getOrDefault(physicalTableConfig.getClusterName(), tableCache);
       }
       Preconditions.checkNotNull(tableType);
       ImplicitHybridTableRouteInfo physicalTableInfo = new ImplicitHybridTableRouteInfo();

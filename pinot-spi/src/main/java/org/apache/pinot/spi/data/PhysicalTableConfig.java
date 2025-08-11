@@ -35,7 +35,8 @@ public class PhysicalTableConfig extends BaseJsonConfig {
    *
    * @return the cluster name
    */
-  public PhysicalTableConfig() {}
+  public PhysicalTableConfig() {
+  }
 
   public PhysicalTableConfig(String clusterName) {
     _clusterName = clusterName;
