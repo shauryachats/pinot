@@ -55,6 +55,7 @@ import org.apache.pinot.broker.requesthandler.SingleConnectionBrokerRequestHandl
 import org.apache.pinot.broker.requesthandler.TimeSeriesRequestHandler;
 import org.apache.pinot.broker.routing.BrokerRoutingManager;
 import org.apache.pinot.broker.routing.FederatedRoutingManager;
+import org.apache.pinot.broker.routing.SecondaryBrokerRoutingManager;
 import org.apache.pinot.common.Utils;
 import org.apache.pinot.common.config.NettyConfig;
 import org.apache.pinot.common.config.TlsConfig;
@@ -157,7 +158,6 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
   protected ClusterChangeMediator _secondaryClusterChangeMediator;
   // Participant Helix manager handles Helix functionality such as state transitions and messages
   protected HelixManager _participantHelixManager;
-  protected HelixManager _secondaryParticipantHelixManager;
   // Handles the server routing stats.
   protected ServerRoutingStatsManager _serverRoutingStatsManager;
   protected HelixExternalViewBasedQueryQuotaManager _queryQuotaManager;
@@ -347,7 +347,7 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
 
     if (_secondaryZkServers != null) {
       _secondaryRoutingManager =
-          new BrokerRoutingManager(_brokerMetrics, _serverRoutingStatsManager, _brokerConf);
+          new SecondaryBrokerRoutingManager(_brokerMetrics, _serverRoutingStatsManager, _brokerConf);
       _secondaryRoutingManager.init(_secondarySpectatorHelixManager);
       _federatedRoutingManager = new FederatedRoutingManager(_routingManager, _secondaryRoutingManager);
     }
@@ -524,7 +524,7 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     if (!_liveInstanceChangeHandlers.isEmpty()) {
       clusterChangeHandlersMap.put(ChangeType.LIVE_INSTANCE, _liveInstanceChangeHandlers);
     }
-    _clusterChangeMediator = new ClusterChangeMediator(clusterChangeHandlersMap, _brokerMetrics);
+    _clusterChangeMediator = new ClusterChangeMediator(_instanceId, clusterChangeHandlersMap, _brokerMetrics);
     _clusterChangeMediator.start();
     _spectatorHelixManager.addIdealStateChangeListener(_clusterChangeMediator);
     _spectatorHelixManager.addExternalViewChangeListener(_clusterChangeMediator);
@@ -549,29 +549,6 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
         .registerMessageHandlerFactory(Message.MessageType.USER_DEFINE_MSG.toString(),
             new BrokerUserDefinedMessageHandlerFactory(_routingManager, _queryQuotaManager));
     _participantHelixManager.connect();
-
-    if (_secondaryClusterName != null) {
-      LOGGER.info("Connecting secondary participant Helix manager");
-      _secondaryParticipantHelixManager =
-          HelixManagerFactory.getZKHelixManager(_secondaryClusterName, _secondaryInstanceId, InstanceType.PARTICIPANT,
-              _secondaryZkServers);
-      // Register state model factory
-      _secondaryParticipantHelixManager.getStateMachineEngine()
-        .registerStateModelFactory(BrokerResourceOnlineOfflineStateModelFactory.getStateModelDef(),
-          new BrokerResourceOnlineOfflineStateModelFactory(
-              _secondarySpectatorHelixManager.getHelixPropertyStore(),
-              _secondarySpectatorHelixManager.getHelixDataAccessor(),
-              _secondaryRoutingManager, _queryQuotaManager));
-      // Register user-define message handler factory
-      _secondaryParticipantHelixManager.getMessagingService()
-        .registerMessageHandlerFactory(Message.MessageType.USER_DEFINE_MSG.toString(),
-          new BrokerUserDefinedMessageHandlerFactory(_secondaryRoutingManager, _queryQuotaManager));
-      try {
-        _secondaryParticipantHelixManager.connect();
-      } catch (Exception e) {
-        throw e;
-      }
-    }
 
     updateInstanceConfigAndBrokerResourceIfNeeded();
     _brokerMetrics.addCallbackGauge(Helix.INSTANCE_CONNECTED_METRIC_NAME,
@@ -609,8 +586,9 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
     clusterChangeHandlersMap.put(ChangeType.IDEAL_STATE, Collections.singletonList(_secondaryRoutingManager));
     clusterChangeHandlersMap.put(ChangeType.EXTERNAL_VIEW, Collections.singletonList(_secondaryRoutingManager));
     clusterChangeHandlersMap.put(ChangeType.INSTANCE_CONFIG, Collections.singletonList(_secondaryRoutingManager));
+    clusterChangeHandlersMap.put(ChangeType.RESOURCE_CONFIG, Collections.singletonList(_secondaryRoutingManager));
 
-    _secondaryClusterChangeMediator = new ClusterChangeMediator(clusterChangeHandlersMap, _brokerMetrics);
+    _secondaryClusterChangeMediator = new ClusterChangeMediator(_secondaryInstanceId, clusterChangeHandlersMap, _brokerMetrics);
     _secondaryClusterChangeMediator.start();
 
     LOGGER.info("Connecting secondary spectator Helix manager");
@@ -689,11 +667,6 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
       HelixHelper.updateInstanceConfig(_participantHelixManager, instanceConfig);
     }
 
-    // Handle secondary cluster instance config and broker resource update
-    if (_secondaryParticipantHelixManager != null) {
-      updateSecondaryInstanceConfigAndBrokerResource(instanceTags, shouldUpdateBrokerResource);
-    }
-
     if (shouldUpdateBrokerResource) {
       // Update broker resource to include the new broker
       long startTimeMs = System.currentTimeMillis();
@@ -701,81 +674,6 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
       HelixHelper.updateBrokerResource(_participantHelixManager, _instanceId, instanceTags, tablesAdded, null);
       LOGGER.info("Updated broker resource for new joining broker: {} with instance tags: {} in {}ms, tables added: {}",
           _instanceId, instanceTags, System.currentTimeMillis() - startTimeMs, tablesAdded);
-    }
-  }
-
-    /**
-   * Updates the secondary cluster instance config and broker resource
-   */
-  private void updateSecondaryInstanceConfigAndBrokerResource(
-      List<String> instanceTags, boolean shouldUpdateBrokerResource) {
-    try {
-      // Get or create secondary instance config
-      InstanceConfig secondaryInstanceConfig = HelixHelper.getInstanceConfig(
-          _secondaryParticipantHelixManager, _secondaryInstanceId);
-      if (secondaryInstanceConfig == null) {
-        // Create new instance config for secondary cluster
-        secondaryInstanceConfig = new InstanceConfig(_secondaryInstanceId);
-        secondaryInstanceConfig.setHostName(_hostname);
-        secondaryInstanceConfig.setPort(String.valueOf(_port));
-
-        // Add the same tags as primary instance
-        for (String tag : instanceTags) {
-          secondaryInstanceConfig.addTag(tag);
-        }
-
-        // Add instance to secondary cluster
-        _secondaryParticipantHelixManager.getClusterManagmentTool().addInstance(
-            _secondaryClusterName, secondaryInstanceConfig);
-        LOGGER.info("Created secondary instance config for: {} in cluster: {}",
-            _secondaryInstanceId, _secondaryClusterName);
-      } else {
-        // Update existing secondary instance config
-        boolean updated = HelixHelper.updateHostnamePort(secondaryInstanceConfig, _hostname, _port);
-        updated |= HelixHelper.updatePinotVersion(secondaryInstanceConfig);
-
-        // Update tags if needed
-        List<String> existingTags = secondaryInstanceConfig.getTags();
-        if (!existingTags.equals(instanceTags)) {
-          // Clear existing tags and add new ones
-          for (String tag : existingTags) {
-            secondaryInstanceConfig.removeTag(tag);
-          }
-          for (String tag : instanceTags) {
-            secondaryInstanceConfig.addTag(tag);
-          }
-          updated = true;
-        }
-
-        if (updated) {
-          HelixHelper.updateInstanceConfig(_secondaryParticipantHelixManager, secondaryInstanceConfig);
-        }
-      }
-
-      // Update secondary broker resource if needed
-      if (shouldUpdateBrokerResource) {
-        try {
-          long startTimeMs = System.currentTimeMillis();
-          List<String> tablesAdded = new ArrayList<>();
-          HelixHelper.updateBrokerResource(_secondaryParticipantHelixManager, _secondaryInstanceId,
-              instanceTags, tablesAdded, null);
-          LOGGER.info(
-              "Updated secondary broker resource for new joining broker: {} with instance tags: {} in {}ms, "
-                  + "tables added: {}",
-              _secondaryInstanceId, instanceTags, System.currentTimeMillis() - startTimeMs, tablesAdded);
-        } catch (Exception e) {
-          LOGGER.warn(
-              "Failed to update secondary broker resource for: {} "
-                  + "(this may be normal if secondary cluster has no tables)",
-              _secondaryInstanceId, e);
-          // This is expected if the secondary cluster doesn't have any tables configured
-        }
-      }
-    } catch (Exception e) {
-      LOGGER.error(
-          "Failed to update secondary cluster instance config and broker resource for: {}",
-          _secondaryInstanceId, e);
-      // Don't fail the entire startup process if secondary cluster update fails
     }
   }
 
@@ -862,14 +760,6 @@ public abstract class BaseBrokerStarter implements ServiceStartable {
 
     LOGGER.info("Disconnecting participant Helix manager");
     _participantHelixManager.disconnect();
-
-    // Clean up secondary cluster resources
-    if (_secondaryParticipantHelixManager != null) {
-      LOGGER.info("Cleaning up secondary cluster resources");
-      cleanupSecondaryClusterResources();
-      LOGGER.info("Disconnecting secondary participant Helix manager");
-      _secondaryParticipantHelixManager.disconnect();
-    }
 
     LOGGER.info("Stopping cluster change mediator");
     _clusterChangeMediator.stop();

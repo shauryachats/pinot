@@ -18,6 +18,8 @@
  */
 package org.apache.pinot.integration.tests.federation;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -509,7 +511,6 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
 
     loadDataIntoCluster(_cluster1AvroFiles, LOGICAL_FEDERATION_CLUSTER_1_TABLE, _cluster1);
     loadDataIntoCluster(_cluster2AvroFiles, LOGICAL_FEDERATION_CLUSTER_2_TABLE, _cluster2);
-
     // Generate and load data for second logicla table
     _cluster1AvroFiles2 = createAvroDataMultipleSegments(CLUSTER_1_SIZE, 1, SEGMENTS_PER_CLUSTER);
     _cluster2AvroFiles2 = createAvroDataMultipleSegments(CLUSTER_2_SIZE, 2, SEGMENTS_PER_CLUSTER);
@@ -540,8 +541,30 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     String result = executeQuery(joinQuery, _cluster1);
     assertNotNull(result);
     assertTrue(result.contains("resultTable"));
+    System.out.println(result);
+    assertResultRows(result);
 
     LOGGER.info("MSE Federation Join Test completed successfully");
+  }
+
+
+
+  private void assertResultRows(String resultJson) throws Exception {
+    JsonNode root =
+        JsonMapper.builder().build().readTree(resultJson);
+    JsonNode rows = root.get("resultTable").get("rows");
+    assertNotNull(rows);
+    for (JsonNode row : rows) {
+      String cityName = row.get(0).asText();
+      int count = row.get(1).asInt();
+      String[] parts = cityName.split("_");
+      int number = Integer.parseInt(parts[2]);
+      if (number < 1000) {
+        assertEquals(count, 4, "Expected count 4 for " + cityName);
+      } else {
+        assertEquals(count, 1, "Expected count 1 for " + cityName);
+      }
+    }
   }
 
   @Test
@@ -982,6 +1005,10 @@ public class DualIsolatedClusterIntegrationTest extends ClusterTest {
     ControllerRequestClient controllerRequestClient =
         new ControllerRequestClient(ControllerRequestURLBuilder.baseUrl(controllerBaseApiUrl), getHttpClient(),
             getControllerRequestClientHeaders());
+    String getBrokersUrl = controllerRequestURLBuilder.forBrokersGet(null);
+    String brokerResponse = ControllerTest.sendGetRequest(getBrokersUrl);
+    System.out.println("Broker response: " + brokerResponse + " for cluster: " + clusterName);
+
     String addLogicalTableUrl = controllerRequestURLBuilder.forLogicalTableCreate();
     Schema logicalTableSchema = createSchema(schemaFile);
     logicalTableSchema.setSchemaName(logicalTable);

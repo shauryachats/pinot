@@ -116,11 +116,11 @@ public class BrokerRoutingManager implements RoutingManager, ClusterChangeHandle
   private final PinotConfiguration _pinotConfig;
   private final boolean _enablePartitionMetadataManager;
 
-  private BaseDataAccessor<ZNRecord> _zkDataAccessor;
-  private String _externalViewPathPrefix;
-  private String _idealStatePathPrefix;
+  protected BaseDataAccessor<ZNRecord> _zkDataAccessor;
+  protected String _externalViewPathPrefix;
+  protected String _idealStatePathPrefix;
   private String _instanceConfigsPath;
-  private ZkHelixPropertyStore<ZNRecord> _propertyStore;
+  protected ZkHelixPropertyStore<ZNRecord> _propertyStore;
 
   private Set<String> _routableServers;
 
@@ -151,10 +151,19 @@ public class BrokerRoutingManager implements RoutingManager, ClusterChangeHandle
       processSegmentAssignmentChange();
     } else if (changeType == ChangeType.INSTANCE_CONFIG) {
       processInstanceConfigChange();
-    } else {
+    }
+    // temporary change to handle resource config change
+    else if (changeType == ChangeType.RESOURCE_CONFIG) {
+      processBrokerResourceConfigChange();
+    }
+    else {
       // NOTE: We don't track live instances change because that will be reflected through the external view change
       throw new IllegalArgumentException("Illegal change type: " + changeType);
     }
+  }
+
+  // NOOP method to handle resource config change
+  protected void processBrokerResourceConfigChange() {
   }
 
   private void processSegmentAssignmentChange() {
