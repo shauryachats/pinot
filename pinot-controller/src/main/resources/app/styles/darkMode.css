@@ -1,0 +1,206 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+/* Dark mode styles */
+.theme-dark {
+  /* Global dark mode overrides */
+  background-color: #121212;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+/* Material-UI component overrides for dark mode */
+.theme-dark .MuiPaper-root {
+  background-color: #1e1e1e;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiAppBar-root {
+  background-color: #1a1a1a;
+}
+
+.theme-dark .MuiDrawer-paper {
+  background-color: #1a1a1a;
+}
+
+.theme-dark .MuiTableCell-root {
+  border-color: #404040;
+}
+
+.theme-dark .MuiTableHead-root .MuiTableCell-root {
+  background-color: rgba(66, 133, 244, 0.1);
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiTableBody-root .MuiTableRow-root:nth-of-type(even) {
+  background-color: #2a2a2a;
+}
+
+.theme-dark .MuiTableBody-root .MuiTableRow-root:hover {
+  background-color: #3a3a3a;
+}
+
+.theme-dark .MuiInputBase-root {
+  background-color: #2d2d2d;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiInputBase-input {
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiInputLabel-root {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.theme-dark .MuiOutlinedInput-notchedOutline {
+  border-color: #404040;
+}
+
+.theme-dark .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #555555;
+}
+
+.theme-dark .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #4285f4;
+}
+
+.theme-dark .MuiSelect-select {
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiSelect-icon {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.theme-dark .MuiChip-root {
+  background-color: #2d2d2d;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiChip-outlined {
+  border-color: #404040;
+}
+
+.theme-dark .MuiAccordion-root {
+  background-color: #1e1e1e;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiAccordionSummary-root {
+  background-color: rgba(66, 133, 244, 0.15);
+}
+
+.theme-dark .MuiAccordionDetails-root {
+  background-color: #1e1e1e;
+}
+
+.theme-dark .MuiDialog-paper {
+  background-color: #1e1e1e;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiMenu-paper {
+  background-color: #1e1e1e;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiMenuItem-root:hover {
+  background-color: #2a2a2a;
+}
+
+.theme-dark .MuiMenuItem-root.Mui-selected {
+  background-color: rgba(66, 133, 244, 0.2);
+}
+
+.theme-dark .MuiTooltip-tooltip {
+  background-color: #2d2d2d;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .MuiSnackbar-root .MuiSnackbarContent-root {
+  background-color: #2d2d2d;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+/* CodeMirror dark mode overrides */
+.theme-dark .CodeMirror {
+  background-color: #1e1e1e;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.theme-dark .CodeMirror-gutters {
+  background-color: #2d2d2d;
+  border-right: 1px solid #404040;
+}
+
+.theme-dark .CodeMirror-linenumber {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.theme-dark .CodeMirror-cursor {
+  border-left: 2px solid #4285f4;
+}
+
+.theme-dark .CodeMirror-selected {
+  background-color: rgba(66, 133, 244, 0.2);
+}
+
+/* Custom scrollbar for dark mode */
+.theme-dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.theme-dark ::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.theme-dark ::-webkit-scrollbar-thumb {
+  background: #555555;
+  border-radius: 4px;
+}
+
+.theme-dark ::-webkit-scrollbar-thumb:hover {
+  background: #666666;
+}
+
+/* Status-specific dark mode styles */
+.theme-dark .status-good {
+  background-color: rgba(76, 175, 80, 0.2);
+  border-color: #4CAF50;
+  color: #81c784;
+}
+
+.theme-dark .status-bad {
+  background-color: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+  color: #e57373;
+}
+
+.theme-dark .status-consuming {
+  background-color: rgba(255, 152, 0, 0.2);
+  border-color: #ff9800;
+  color: #ffb74d;
+}
+
+.theme-dark .status-error {
+  background-color: rgba(255, 107, 107, 0.2);
+  border-color: #ff6b6b;
+  color: #ff8a80;
+}

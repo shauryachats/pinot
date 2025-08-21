@@ -27,11 +27,12 @@ import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import Box from '@material-ui/core/Box';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import { keys } from 'lodash';
+import { colors } from '../theme';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      color : '#fff'
+      color: colors.text.light
     }
   })
 );
@@ -154,7 +155,7 @@ const BreadcrumbsComponent = ({ ...props }) => {
   return (
     <Box marginY="auto" padding="0.25rem 1.5rem" display="flex">
       <Breadcrumbs
-        separator={<NavigateNextIcon style={{ fill: '#fff' }} />}
+        separator={<NavigateNextIcon style={{ fill: colors.text.light }} />}
         aria-label="breadcrumb"
       >
         {generateBreadcrumb()}

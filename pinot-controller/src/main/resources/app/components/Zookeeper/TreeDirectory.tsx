@@ -33,6 +33,7 @@ import CustomCodemirror from '../CustomCodemirror';
 import PinotMethodUtils from '../../utils/PinotMethodUtils';
 import Utils from '../../utils/Utils';
 import { NotificationContext } from '../Notification/NotificationContext';
+import { colors } from '../../theme';
 
 const drawerWidth = 400;
 
@@ -42,7 +43,7 @@ const useStyles = makeStyles((theme: Theme) =>
       width: drawerWidth,
       height: 'calc(100vh - 70px)',
       flexShrink: 0,
-      backgroundColor: '#333333',
+      backgroundColor: colors.background.dark,
     },
     drawerPaper: {
       position: 'unset',
@@ -67,8 +68,8 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     popover: {
       '& .MuiPopover-paper': {
-        backgroundColor: '#4285f4',
-        color: 'white',
+        backgroundColor: colors.primary[500],
+        color: colors.text.light,
         overflow: 'visible',
         '&:after': {
           bottom: '100%',
@@ -79,7 +80,7 @@ const useStyles = makeStyles((theme: Theme) =>
           width: '0',
           position: 'absolute',
           pointerEvents: 'none',
-          borderBottomColor: '#4285f4',
+          borderBottomColor: colors.primary[500],
           borderWidth: '8px',
           marginLeft: '-8px',
           zIndex: '9',

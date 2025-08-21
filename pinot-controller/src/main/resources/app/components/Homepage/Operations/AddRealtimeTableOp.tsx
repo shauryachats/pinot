@@ -34,11 +34,12 @@ import AddQueryComponent from './AddQueryComponent';
 import { isEmpty, isArray } from 'lodash';
 import AddRealTimeIngestionComponent from './AddRealTimeIngestionComponent';
 import AddRealTimePartionComponent from './AddRealTimePartionComponent';
+import { colors } from '../../../theme';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     sqlDiv: {
-      border: '1px #BDCCD9 solid',
+      border: `1px ${colors.border.secondary} solid`,
       borderRadius: 4,
       marginBottom: '20px',
     },

@@ -32,6 +32,7 @@ import PinotMethodUtils from '../../../utils/PinotMethodUtils';
 import CustomCodemirror from '../../CustomCodemirror';
 import SearchBar from '../../SearchBar';
 import RemoveCircleIcon from '@material-ui/icons/RemoveCircle';
+import { colors } from '../../../theme';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -62,7 +63,7 @@ const useStyles = makeStyles((theme: Theme) =>
 const StyledTableCell = withStyles((theme: Theme) =>
   createStyles({
     head: {
-      backgroundColor: '#ecf3fe',
+      backgroundColor: colors.overlay.primaryLight,
       color: theme.palette.primary.main,
       fontWeight: 600
     }

@@ -28,6 +28,7 @@ import CustomizedTables from '../Table';
 import QueryIcon from '@material-ui/icons/QueryBuilder';
 import TimelineIcon from '@material-ui/icons/Timeline';
 import { useHistory, useLocation } from 'react-router';
+import { colors } from '../../theme';
 
 const drawerWidth = 300;
 
@@ -43,7 +44,7 @@ const useStyles = makeStyles((theme: Theme) =>
       width: drawerWidth,
       height: 'calc(100vh - 70px)',
       flexShrink: 0,
-      backgroundColor: '#333333',
+      backgroundColor: colors.background.dark,
     },
     drawerPaper: {
       position: 'unset',
@@ -58,11 +59,11 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(3),
     },
     itemContainer: {
-      color: '#3B454E',
+      color: colors.text.dark,
       borderRadius: '4px'
     },
     selectedItem: {
-      background: '#D8E1E8!important'
+      background: `${colors.secondary[500]}!important`
     },
     link: {
       textDecoration: 'none'
@@ -105,7 +106,7 @@ const Sidebar = ({ tableList, fetchSQLData, tableSchema, selectedTable, queryLoa
       >
         <div className={classes.drawerContainer}>
           <Grid item xs className={classes.leftPanel}>
-            <Typography variant="h6" style={{ marginBottom: '4px', color: '#3B454E' }}>
+            <Typography variant="h6" style={{ marginBottom: '4px', color: colors.text.dark }}>
               Query Type
             </Typography>
             <List component="nav" style={{ marginBottom: '0px' }}>

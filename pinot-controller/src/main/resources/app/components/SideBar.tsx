@@ -27,6 +27,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 import { NavLink } from 'react-router-dom';
+import { colors } from '../theme';
 
 const drawerWidth = 260;
 
@@ -42,7 +43,7 @@ const useStyles = makeStyles((theme: Theme) =>
       width: drawerWidth,
       height: 'calc(100vh - 70px)',
       flexShrink: 0,
-      backgroundColor: '#333333',
+      backgroundColor: colors.background.dark,
     },
     drawerOpen: {
       width: drawerWidth,
@@ -60,7 +61,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     drawerPaper: {
       position: 'unset',
-      backgroundColor: '#F5F7F9',
+      backgroundColor: colors.secondary[500],
       overflowY: 'visible'
     },
     drawerContainer: {
@@ -73,14 +74,14 @@ const useStyles = makeStyles((theme: Theme) =>
     itemContainer: {
       width: 'auto',
       display: 'block',
-      color: '#3B454E',
+      color: colors.text.dark,
       borderRadius: '4px',
       '&:hover': {
-        backgroundColor: '#ecedef'
+        backgroundColor: colors.neutral[200]
       }
     },
     selectedItem: {
-      background: '#D8E1E8!important'
+      background: `${colors.secondary[500]}!important`
     },
     link: {
       textDecoration: 'none',

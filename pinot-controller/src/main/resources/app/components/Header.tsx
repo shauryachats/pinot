@@ -24,6 +24,8 @@ import MenuIcon from '@material-ui/icons/Menu';
 import Logo from './SvgIcons/Logo';
 import BreadcrumbsComponent from './Breadcrumbs';
 import TimezoneSelector from './TimezoneSelector';
+import DarkModeToggle from './DarkModeToggle';
+import { colors } from '../theme';
 
 type Props = {
   highlightSidebarLink: (id: number) => void;
@@ -38,9 +40,9 @@ const useStyles = makeStyles((theme) => ({
   },
   paper:{
     padding: '0 0.5rem',
-    color: '#fff',
+    color: colors.text.light,
     textAlign: 'center',
-    backgroundColor: 'rgba(66, 133, 244, 0.1)',
+    backgroundColor: colors.overlay.primaryMedium,
     boxShadow: 'none',
     fontSize: 'smaller',
     '& h2, h4': {
@@ -89,7 +91,7 @@ const Header = ({ highlightSidebarLink, showHideSideBarHandler, openSidebar, clu
     <AppBar position="static">
       <Box display="flex">
         <Box textAlign="center" marginY="12.5px" width={openSidebar ? 250 : 90} borderRight="1px solid rgba(255,255,255,0.5)">
-          <Link to="/" style={{color: '#ffffff'}}><Logo onClick={() => highlightSidebarLink(1)} fulllogo={openSidebar.toString()} /></Link>
+          <Link to="/" style={{color: colors.text.light}}><Logo onClick={() => highlightSidebarLink(1)} fulllogo={openSidebar.toString()} /></Link>
         </Box>
         <Box display="flex" alignItems="center" className={classes.breadcrumbRoot}>
           <Box marginY="auto" padding="0.25rem 0 0.25rem 1.5rem" display="flex" style={{cursor: 'pointer'}}>
@@ -101,6 +103,7 @@ const Header = ({ highlightSidebarLink, showHideSideBarHandler, openSidebar, clu
           <Box className={classes.timezoneContainer}>
             <TimezoneSelector variant="outlined" size="small" showIcon={false} />
           </Box>
+          <DarkModeToggle size="small" />
         </Box>
         <Box textAlign="center" marginY="11.5px" borderLeft="1px solid rgba(255,255,255,0.5)">
           <Paper className={classes.paper}>

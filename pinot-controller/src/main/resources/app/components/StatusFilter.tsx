@@ -26,6 +26,7 @@ import {
   Chip
 } from '@material-ui/core';
 import { DISPLAY_SEGMENT_STATUS } from 'Models';
+import { colors } from '../theme';
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -35,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
   select: {
     height: 32,
     fontSize: '0.875rem',
-    backgroundColor: '#fff',
+    backgroundColor: colors.background.paper,
     '& .MuiSelect-select': {
       paddingTop: 6,
       paddingBottom: 6,
@@ -49,27 +50,27 @@ const useStyles = makeStyles((theme) => ({
     '& .MuiOutlinedInput-root': {
       borderRadius: 4,
       '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#4285f4',
+        borderColor: colors.primary[500],
       },
       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#4285f4',
+        borderColor: colors.primary[500],
         borderWidth: 1,
       },
     },
     '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#BDCCD9',
+      borderColor: colors.border.secondary,
     },
   },
   inputLabel: {
     fontSize: '0.75rem',
-    color: '#666',
+    color: colors.text.secondary,
     transform: 'translate(12px, 9px) scale(1)',
     '&.MuiInputLabel-shrink': {
       transform: 'translate(12px, -6px) scale(0.75)',
-      color: '#4285f4',
+      color: colors.primary[500],
     },
     '&.Mui-focused': {
-      color: '#4285f4',
+      color: colors.primary[500],
     },
   },
   menuItem: {
@@ -77,12 +78,12 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '0.875rem',
     minHeight: 'auto',
     '&:hover': {
-      backgroundColor: 'rgba(66, 133, 244, 0.08)',
+      backgroundColor: colors.overlay.primaryMedium,
     },
     '&.Mui-selected': {
-      backgroundColor: 'rgba(66, 133, 244, 0.12)',
+      backgroundColor: colors.overlay.primaryHeavy,
       '&:hover': {
-        backgroundColor: 'rgba(66, 133, 244, 0.16)',
+        backgroundColor: colors.overlay.primaryHeavier,
       },
     },
   },
@@ -98,29 +99,29 @@ const useStyles = makeStyles((theme) => ({
   },
   // Status styles
   cellStatusGood: {
-    color: '#4CAF50',
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    border: '1px solid #4CAF50',
+    color: colors.segmentStatus.good.text,
+    backgroundColor: colors.segmentStatus.good.background,
+    border: `1px solid ${colors.segmentStatus.good.border}`,
   },
   cellStatusBad: {
-    color: '#f44336',
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-    border: '1px solid #f44336',
+    color: colors.segmentStatus.bad.text,
+    backgroundColor: colors.segmentStatus.bad.background,
+    border: `1px solid ${colors.segmentStatus.bad.border}`,
   },
   cellStatusConsuming: {
-    color: '#ff9800',
-    backgroundColor: 'rgba(255, 152, 0, 0.1)',
-    border: '1px solid #ff9800',
+    color: colors.segmentStatus.consuming.text,
+    backgroundColor: colors.segmentStatus.consuming.background,
+    border: `1px solid ${colors.segmentStatus.consuming.border}`,
   },
   cellStatusError: {
-    color: '#a11',
-    backgroundColor: 'rgba(170, 17, 17, 0.1)',
-    border: '1px solid #a11',
+    color: colors.segmentStatus.error.text,
+    backgroundColor: colors.segmentStatus.error.background,
+    border: `1px solid ${colors.segmentStatus.error.border}`,
   },
   menuPaper: {
     marginTop: 2,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
-    border: '1px solid #BDCCD9',
+    border: `1px solid ${colors.border.secondary}`,
     maxHeight: 200,
   }
 }));

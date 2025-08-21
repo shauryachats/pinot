@@ -27,12 +27,13 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import SearchBar from './SearchBar';
 import { FormControlLabel, Switch, Tooltip, Box } from '@material-ui/core';
 import clsx from 'clsx';
+import { colors } from '../theme';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      backgroundColor: 'rgba(66, 133, 244, 0.1)',
-      borderBottom: '1px #BDCCD9 solid',
+      backgroundColor: colors.overlay.primaryMedium,
+      borderBottom: `1px ${colors.border.secondary} solid`,
       minHeight: '0 !important',
       '& .MuiAccordionSummary-content.Mui-expanded': {
         margin: 0,
@@ -43,7 +44,7 @@ const useStyles = makeStyles((theme: Theme) =>
       fontWeight: 600,
       letterSpacing: '1px',
       fontSize: '1rem',
-      color: '#4285f4'
+      color: colors.primary[500]
     },
     details: {
       flexDirection: 'column',
@@ -60,8 +61,8 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: '8px 16px',
-      borderBottom: '1px solid #BDCCD9',
-      backgroundColor: '#f8f9fa',
+      borderBottom: `1px solid ${colors.border.secondary}`,
+      backgroundColor: colors.neutral[50],
       flexWrap: 'wrap',
     },
     searchBarContainer: {

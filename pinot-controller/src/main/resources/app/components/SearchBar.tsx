@@ -21,6 +21,7 @@ import React from 'react';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import SearchIcon from '@material-ui/icons/Search';
 import InputBase, { InputBaseProps } from '@material-ui/core/InputBase';
+import { colors } from '../theme';
 
 // TODO: Remove unneccessary styles, This styles are from demo of material-ui doc
 const useStyles = makeStyles((theme) => ({
@@ -44,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
     height: '100%',
     position: 'absolute',
     pointerEvents: 'none',
-    color: '#9DAAB6',
+    color: colors.neutral[500],
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

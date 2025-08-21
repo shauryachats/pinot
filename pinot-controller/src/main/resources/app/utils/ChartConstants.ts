@@ -17,13 +17,11 @@
  * under the License.
  */
 
+import { getChartColors, getChartColor } from '../theme/themeUtils';
+
 // Standard chart colors matching the ECharts palette
-export const CHART_COLORS = [
-    "#5470C6", "#91CC75", "#EE6666", "#FAC858", "#73C0DE",
-    "#3BA272", "#FC8452", "#9A60B4", "#EA7CCC", "#6E7074",
-    "#546570", "#C4CCD3", "#F05B72", "#FF715E", "#FFAF51",
-    "#FFE153", "#47B39C", "#5BACE1", "#32C5E9", "#96BFFF"
-];
+// Now imported from the consolidated theme
+export const CHART_COLORS = getChartColors();
 
 /**
  * Default number of series that can be rendered in the chart
@@ -41,5 +39,5 @@ export const CHART_PADDING_PERCENTAGE = 0.05; // 5%
  * @returns The color for the series
  */
 export const getSeriesColor = (index: number): string => {
-  return CHART_COLORS[index % CHART_COLORS.length];
+  return getChartColor(index);
 };

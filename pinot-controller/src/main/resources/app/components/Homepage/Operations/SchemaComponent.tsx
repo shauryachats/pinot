@@ -23,6 +23,7 @@ import AddIcon from '@material-ui/icons/Add';
 import ClearIcon from '@material-ui/icons/Clear';
 import { Autocomplete } from '@material-ui/lab';
 import { debug } from 'webpack';
+import { colors } from '../../../theme';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -35,14 +36,14 @@ const useStyles = makeStyles((theme: Theme) =>
     dateTimeDiv:{
       marginLeft: '20px',
       paddingLeft: '20px',
-      borderLeft: '1px #ccc solid'
+      borderLeft: `1px ${colors.border.light} solid`
     },
     gridItem:{
       display: 'flex',
       alignItems: 'center',
       marginTop: '15px',
       padding: '5px',
-      border: '1px #ccc solid',
+      border: `1px ${colors.border.light} solid`,
       borderRadius: 5
     },
     formControl: {

@@ -27,6 +27,8 @@ import { useAuthProvider } from './components/auth/AuthProvider';
 import { AppLoadingIndicator } from './components/AppLoadingIndicator';
 import { AuthWorkflow } from 'Models';
 import { TimezoneProvider } from './contexts/TimezoneContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { initializeThemeMode } from './theme/themeUtils';
 
 export const App = () => {
   const [clusterName, setClusterName] = useState('');
@@ -35,6 +37,11 @@ export const App = () => {
   const [role, setRole] = useState('');
   const { authUserName, authUserEmail, authenticated, authWorkflow } = useAuthProvider();
   const history = useHistory();
+
+  // Initialize theme mode on app startup
+  React.useEffect(() => {
+    initializeThemeMode();
+  }, []);
 
   useEffect(() => {
     // authentication already handled by authProvider
@@ -138,8 +145,9 @@ export const App = () => {
   }
 
   return (
-    <TimezoneProvider>
-      <Switch>
+    <ThemeProvider>
+      <TimezoneProvider>
+        <Switch>
         {getRouterData().map(({ path, Component }, key) => (
           <Route
             exact
@@ -165,6 +173,7 @@ export const App = () => {
           />
         </Route>
       </Switch>
-    </TimezoneProvider>
+      </TimezoneProvider>
+    </ThemeProvider>
   );
 };

@@ -19,39 +19,62 @@
 
 import { createMuiTheme } from '@material-ui/core/styles';
 
-import primary from './color/primary';
-import secondary from './color/secondary';
+import colors from './colors';
 import typography from './typography';
 
 const theme = createMuiTheme({
   palette: {
     common: {
-      black: '#000',
-      white: '#fff',
+      black: colors.common.black,
+      white: colors.common.white,
     },
     primary: {
-      light: primary[50],
-      main: primary[500],
-      dark: primary[900],
-      contrastText: '#fff',
+      light: colors.primary[50],
+      main: colors.primary[500],
+      dark: colors.primary[900],
+      contrastText: colors.common.white,
     },
     secondary: {
-      light: secondary[50],
-      main: secondary[500],
-      dark: secondary[900],
-      contrastText: '#fff',
+      light: colors.secondary[50],
+      main: colors.secondary[500],
+      dark: colors.secondary[900],
+      contrastText: colors.common.white,
     },
     text: {
-      primary: 'rgba(0, 0, 0, 0.87)',
-      disabled: 'rgba(0, 0, 0, 0.38)',
-      hint: 'white',
+      primary: colors.text.primary,
+      disabled: colors.text.disabled,
+      hint: colors.text.hint,
     },
     background: {
-      default: '#ffffff',
-      paper: '#fff',
+      default: colors.background.default,
+      paper: colors.background.paper,
+    },
+    error: {
+      main: colors.status.error.main,
+      light: colors.status.error.light,
+      dark: colors.status.error.dark,
+    },
+    warning: {
+      main: colors.status.warning.main,
+      light: colors.status.warning.light,
+      dark: colors.status.warning.dark,
+    },
+    success: {
+      main: colors.status.success.main,
+      light: colors.status.success.light,
+      dark: colors.status.success.dark,
+    },
+    info: {
+      main: colors.status.info.main,
+      light: colors.status.info.light,
+      dark: colors.status.info.dark,
     },
   },
   typography,
 });
+
+// Export the consolidated colors for use throughout the application
+export { colors };
+
 // TODO: remove all StyledButton usages
 export default theme;

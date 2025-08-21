@@ -30,6 +30,7 @@ import {
 } from "./RebalanceServerResponses/RebalanceServerRebalanceSummaryResponse";
 import {RebalanceServerResponseCard} from "./RebalanceServerResponses/RebalanceServerResponseCard";
 import {FileCopyOutlined} from "@material-ui/icons";
+import { colors } from '../../../../theme';
 
 const CopyJobIdToClipboardButton = ({ jobId }: { jobId: string }) => {
     const [open, setOpen] = React.useState<boolean>(false);
@@ -82,13 +83,13 @@ export const RebalanceResponse = ({ response, onJobIdClick }) => {
                                 <Typography color='textSecondary' variant='caption'>Job Id</Typography>
                                 <Box flexDirection="row" display="flex" alignItems="center" marginTop={-1.25}>
                                     {response.status === 'IN_PROGRESS' && onJobIdClick ? (
-                                        <Typography 
-                                            style={{ 
-                                                fontWeight: 600, 
-                                                cursor: 'pointer', 
-                                                color: '#1976d2',
+                                        <Typography
+                                            style={{
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                color: colors.primary[500],
                                                 textDecoration: 'underline'
-                                            }} 
+                                            }}
                                             variant='body2'
                                             onClick={() => onJobIdClick(response.jobId)}
                                             title="Click to view job details"

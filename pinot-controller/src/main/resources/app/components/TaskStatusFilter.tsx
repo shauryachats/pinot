@@ -25,6 +25,7 @@ import {
   makeStyles,
   Chip
 } from '@material-ui/core';
+import { colors } from '../theme';
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -59,44 +60,44 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 500,
   },
   completed: {
-    backgroundColor: '#e8f5e8',
-    borderColor: '#4caf50',
-    color: '#2e7d32',
+    backgroundColor: colors.taskStatus.completed.background,
+    borderColor: colors.taskStatus.completed.border,
+    color: colors.taskStatus.completed.text,
   },
   running: {
-    backgroundColor: '#e3f2fd',
-    borderColor: '#2196f3',
-    color: '#1565c0',
+    backgroundColor: colors.taskStatus.running.background,
+    borderColor: colors.taskStatus.running.border,
+    color: colors.taskStatus.running.text,
   },
   waiting: {
-    backgroundColor: '#fff3e0',
-    borderColor: '#ff9800',
-    color: '#ef6c00',
+    backgroundColor: colors.taskStatus.waiting.background,
+    borderColor: colors.taskStatus.waiting.border,
+    color: colors.taskStatus.waiting.text,
   },
   error: {
-    backgroundColor: '#ffebee',
-    borderColor: '#f44336',
-    color: '#c62828',
+    backgroundColor: colors.taskStatus.error.background,
+    borderColor: colors.taskStatus.error.border,
+    color: colors.taskStatus.error.text,
   },
   unknown: {
-    backgroundColor: '#f3e5f5',
-    borderColor: '#9c27b0',
-    color: '#7b1fa2',
+    backgroundColor: colors.taskStatus.unknown.background,
+    borderColor: colors.taskStatus.unknown.border,
+    color: colors.taskStatus.unknown.text,
   },
   dropped: {
-    backgroundColor: '#fce4ec',
-    borderColor: '#e91e63',
-    color: '#ad1457',
+    backgroundColor: colors.taskStatus.dropped.background,
+    borderColor: colors.taskStatus.dropped.border,
+    color: colors.taskStatus.dropped.text,
   },
   timedout: {
-    backgroundColor: '#fff8e1',
-    borderColor: '#ffc107',
-    color: '#f57c00',
+    backgroundColor: colors.taskStatus.timedout.background,
+    borderColor: colors.taskStatus.timedout.border,
+    color: colors.taskStatus.timedout.text,
   },
   aborted: {
-    backgroundColor: '#efebe9',
-    borderColor: '#795548',
-    color: '#5d4037',
+    backgroundColor: colors.taskStatus.aborted.background,
+    borderColor: colors.taskStatus.aborted.border,
+    color: colors.taskStatus.aborted.text,
   },
 }));
 

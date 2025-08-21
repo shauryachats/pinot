@@ -21,27 +21,28 @@ import React from 'react';
 import TableToolbar from './TableToolbar';
 import { Grid } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
+import { colors } from '../theme';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    border: '1px #BDCCD9 solid',
+    border: `1px ${colors.border.secondary} solid`,
     borderRadius: 4,
     marginBottom: '20px',
   },
   background: {
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.background.paper,
     maxHeight: 'calc(100vh - 70px)',
     overflowY: 'auto',
   },
   highlightBackground: {
-    border: '1px #4285f4 solid',
-    backgroundColor: 'rgba(66, 133, 244, 0.05)',
+    border: `1px ${colors.primary[500]} solid`,
+    backgroundColor: colors.overlay.primaryLight,
     borderRadius: 4,
     marginBottom: '20px',
   },
   body: {
-    borderTop: '1px solid #BDCCD9',
+    borderTop: `1px solid ${colors.border.secondary}`,
     fontSize: '16px',
     lineHeight: '3rem',
     paddingLeft: '15px',

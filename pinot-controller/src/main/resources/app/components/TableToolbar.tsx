@@ -24,6 +24,7 @@ import {
 } from '@material-ui/core/styles';
 import SearchBar from './SearchBar';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
+import { colors } from '../theme';
 
 type Props = {
   name: string;
@@ -41,7 +42,7 @@ const useToolbarStyles = makeStyles((theme) => ({
     paddingLeft: '15px',
     paddingRight: '15px',
     minHeight: 48,
-    backgroundColor: 'rgba(66, 133, 244, 0.1)',
+    backgroundColor: colors.overlay.primaryMedium,
     display: 'flex',
     alignItems: 'center',
   },
@@ -50,7 +51,7 @@ const useToolbarStyles = makeStyles((theme) => ({
     fontWeight: 600,
     letterSpacing: '1px',
     fontSize: '1rem',
-    color: '#4285f4'
+    color: colors.primary[500]
   },
   controlsContainer: {
     display: 'flex',
@@ -59,7 +60,7 @@ const useToolbarStyles = makeStyles((theme) => ({
   },
   recordCount: {
     fontWeight: 600,
-    color: '#666',
+    color: colors.text.secondary,
     fontSize: '0.875rem',
   }
 }));

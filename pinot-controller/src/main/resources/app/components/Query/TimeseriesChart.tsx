@@ -20,6 +20,7 @@
 import React, { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { makeStyles } from '@material-ui/core/styles';
+import { colors } from '../../theme';
 import { Typography, Paper } from '@material-ui/core';
 import { ChartSeries } from 'Models';
 import { getSeriesColor, CHART_PADDING_PERCENTAGE } from '../../utils/ChartConstants';
@@ -138,7 +139,7 @@ const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
         axisPointer: {
           type: 'cross',
           label: {
-            backgroundColor: '#6a7985',
+            backgroundColor: colors.chart.background,
           },
         },
         // Fix hover popup positioning to keep it within chart area

@@ -28,6 +28,7 @@ import 'codemirror/addon/lint/lint';
 import 'codemirror/addon/lint/json-lint';
 import {FormControlLabel, FormGroup, makeStyles, Switch} from '@material-ui/core';
 import clsx from 'clsx';
+import { colors } from '../theme';
 
 declare global {
   interface Window {
@@ -47,7 +48,7 @@ type Props = {
 
 const useStyles = makeStyles((theme) => ({
   codeMirror: {
-    '& .CodeMirror': { height: 600, border: '1px solid #BDCCD9', fontSize: '13px' },
+    '& .CodeMirror': { height: 600, border: `1px solid ${colors.border.secondary}`, fontSize: '13px' },
   },
   switch: {
     '& .MuiFormControlLabel-root': { marginLeft: '0px'},

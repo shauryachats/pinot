@@ -48,6 +48,7 @@ import MetricStatsTable from './MetricStatsTable';
 import { parseTimeseriesResponse, isPrometheusFormat } from '../../utils/TimeseriesUtils';
 import { ChartSeries } from 'Models';
 import { DEFAULT_SERIES_LIMIT } from '../../utils/ChartConstants';
+import { colors } from '../../theme';
 
 // Define proper types
 interface TimeseriesQueryResponse {
@@ -86,14 +87,14 @@ const useStyles = makeStyles((theme) => ({
     height: '100%',
     '& .CodeMirror': {
       height: '100%',
-      border: '1px solid #BDCCD9',
+      border: `1px solid ${colors.border.secondary}`,
       fontSize: '13px',
     },
   },
   queryOutput: {
     '& .CodeMirror': {
       height: 430,
-      border: '1px solid #BDCCD9',
+      border: `1px solid ${colors.border.secondary}`,
       '& .CodeMirror-lines, & .CodeMirror-code': {
         wordWrap: 'break-word',
         whiteSpace: 'pre-wrap',
@@ -117,7 +118,7 @@ const useStyles = makeStyles((theme) => ({
   },
   sqlDiv: {
     height: '100%',
-    border: '1px #BDCCD9 solid',
+    border: `1px ${colors.border.secondary} solid`,
     borderRadius: 4,
     marginBottom: '20px',
     paddingBottom: '48px',

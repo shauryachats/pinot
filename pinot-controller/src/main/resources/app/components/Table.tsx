@@ -53,6 +53,7 @@ import TableToolbar from './TableToolbar';
 import SimpleAccordion from './SimpleAccordion';
 import clsx from 'clsx';
 import { getStatusChipClass } from './StatusFilter';
+import { colors } from '../theme';
 
 type Props = {
   title?: string,
@@ -120,18 +121,18 @@ const StyledChip = withStyles((theme) =>
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    border: '1px #BDCCD9 solid',
+    border: `1px ${colors.border.secondary} solid`,
     borderRadius: 4,
     marginBottom: '20px',
   },
   highlightBackground: {
-    border: '1px #4285f4 solid',
-    backgroundColor: 'rgba(66, 133, 244, 0.05)',
+    border: `1px ${colors.primary[500]} solid`,
+    backgroundColor: colors.overlay.primaryLight,
     borderRadius: 4,
     marginBottom: '20px',
   },
   table: {
-    borderTop: '1px solid #BDCCD9',
+    borderTop: `1px solid ${colors.border.secondary}`,
     // 'td':{
     //   'tr:first-child':{
     //     wordBreak: 'break-all'
@@ -142,28 +143,28 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.primary.main,
     cursor: 'pointer',
     textDecoration: 'underline',
-    borderTop: '1px #BDCCD9 solid'
+    borderTop: `1px ${colors.border.secondary} solid`
   },
   isSticky: {
     whiteSpace: 'nowrap'
   },
   head: {
     fontWeight: 600,
-    borderBottom: '2px solid #BDCCD9',
+    borderBottom: `2px solid ${colors.border.secondary}`,
     lineHeight: '1rem',
     cursor: 'pointer',
     whiteSpace: 'nowrap'
   },
   body: {
     fontSize: 14,
-    color: '#3B454E',
+    color: colors.text.dark,
     padding: '0.5rem 0.6rem',
   },
   nodata: {
     textAlign: 'center',
   },
   link: {
-    color: '#4285f4',
+    color: colors.primary[500],
   },
   spacer: {
     flex: '0 1 auto',
@@ -177,24 +178,24 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   cellStatusGood: {
-    color: '#4CAF50',
-    border: '1px solid #4CAF50',
+    color: colors.segmentStatus.good.text,
+    border: `1px solid ${colors.segmentStatus.good.border}`,
   },
   cellStatusBad: {
-    color: '#f44336',
-    border: '1px solid #f44336',
+    color: colors.segmentStatus.bad.text,
+    border: `1px solid ${colors.segmentStatus.bad.border}`,
   },
   cellStatusConsuming: {
-    color: '#ff9800',
-    border: '1px solid #ff9800',
+    color: colors.segmentStatus.consuming.text,
+    border: `1px solid ${colors.segmentStatus.consuming.border}`,
   },
   cellStatusError: {
-    color: '#a11',
-    border: '1px solid #a11',
+    color: colors.segmentStatus.error.text,
+    border: `1px solid ${colors.segmentStatus.error.border}`,
   },
   clickable: {
     cursor: 'pointer',
-    color: '#4285f4',
+    color: colors.primary[500],
     textDecoration: 'underline',
   }
 }));

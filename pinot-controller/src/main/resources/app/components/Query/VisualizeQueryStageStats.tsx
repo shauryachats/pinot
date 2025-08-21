@@ -28,6 +28,7 @@ import ReactFlow, {
 } from "react-flow-renderer";
 import dagre from "dagre";
 import { Typography, useTheme } from "@material-ui/core";
+import { colors } from "../../theme";
 import "react-flow-renderer/dist/style.css";
 import isEmpty from "lodash/isEmpty";
 
@@ -236,9 +237,9 @@ const CustomNode = ({ data, ...props }) => {
   return (
     <div
       style={{
-        border: "1px solid #ccc",
+        border: `1px solid ${colors.border.light}`,
         borderRadius: "8px",
-        backgroundColor: "#fff",
+        backgroundColor: colors.background.paper,
         padding: NODE_PADDING,
         boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
         minWidth: NODE_MIN_WIDTH,
@@ -255,7 +256,7 @@ const CustomNode = ({ data, ...props }) => {
       >
         {data.type || "Unknown Type"} {/* Display node type */}
       </div>
-      <hr style={{ margin: NODE_HEADER_CONTENT_MARGIN, color: "#ddd" }} />
+      <hr style={{ margin: NODE_HEADER_CONTENT_MARGIN, color: colors.border.divider }} />
       <div style={{ fontSize: "14px", lineHeight: `${NODE_CONTENT_HEIGHT}px` }}>
         {Object.entries(data).map(([key, value]) => (
           <div key={key}>
