@@ -846,6 +846,8 @@ public class CommonConstants {
         // MAX(stringCol) -> MAXSTRING(stringCol)
         // SUM(intCol) -> SUMINT(intCol)
         public static final String AUTO_REWRITE_AGGREGATION_TYPE = "autoRewriteAggregationType";
+        // When enabled, allows multi cluster/federated queries to be executed.
+        public static final String ENABLE_MULTI_CLUSTER_ROUTING = "enableMultiClusterRouting";
       }
 
       public static class QueryOptionValue {
