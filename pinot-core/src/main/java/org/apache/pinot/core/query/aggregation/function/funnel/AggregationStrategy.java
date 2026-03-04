@@ -43,9 +43,9 @@ import org.apache.pinot.segment.spi.index.reader.Dictionary;
 public abstract class AggregationStrategy<A> {
 
   protected final int _numSteps;
-  private final List<ExpressionContext> _stepExpressions;
-  private final List<ExpressionContext> _correlateByExpressions;
-  private final ExpressionContext _primaryCorrelationCol;
+  protected final List<ExpressionContext> _stepExpressions;
+  protected final List<ExpressionContext> _correlateByExpressions;
+  protected final ExpressionContext _primaryCorrelationCol;
 
   public AggregationStrategy(List<ExpressionContext> stepExpressions, List<ExpressionContext> correlateByExpressions) {
     _stepExpressions = stepExpressions;
@@ -82,7 +82,7 @@ public abstract class AggregationStrategy<A> {
    */
   public void aggregate(int length, AggregationResultHolder aggregationResultHolder,
       Map<ExpressionContext, BlockValSet> blockValSetMap) {
-    final Dictionary dictionary = getDictionary(blockValSetMap);
+    final Dictionary dictionary = getCorrelationDictionary(blockValSetMap);
     final int[] correlationIds = getCorrelationIds(blockValSetMap);
     final int[][] steps = getSteps(blockValSetMap);
 
@@ -102,7 +102,7 @@ public abstract class AggregationStrategy<A> {
    */
   public void aggregateGroupBySV(int length, int[] groupKeyArray, GroupByResultHolder groupByResultHolder,
       Map<ExpressionContext, BlockValSet> blockValSetMap) {
-    final Dictionary dictionary = getDictionary(blockValSetMap);
+    final Dictionary dictionary = getCorrelationDictionary(blockValSetMap);
     final int[] correlationIds = getCorrelationIds(blockValSetMap);
     final int[][] steps = getSteps(blockValSetMap);
 
@@ -123,7 +123,7 @@ public abstract class AggregationStrategy<A> {
    */
   public void aggregateGroupByMV(int length, int[][] groupKeysArray, GroupByResultHolder groupByResultHolder,
       Map<ExpressionContext, BlockValSet> blockValSetMap) {
-    final Dictionary dictionary = getDictionary(blockValSetMap);
+    final Dictionary dictionary = getCorrelationDictionary(blockValSetMap);
     final int[] correlationIds = getCorrelationIds(blockValSetMap);
     final int[][] steps = getSteps(blockValSetMap);
 
@@ -144,7 +144,7 @@ public abstract class AggregationStrategy<A> {
    */
   abstract void add(Dictionary dictionary, A aggResult, int step, int correlationId);
 
-  private Dictionary getDictionary(Map<ExpressionContext, BlockValSet> blockValSetMap) {
+  protected Dictionary getCorrelationDictionary(Map<ExpressionContext, BlockValSet> blockValSetMap) {
     final Dictionary primaryCorrelationDictionary = blockValSetMap.get(_primaryCorrelationCol).getDictionary();
     Preconditions.checkArgument(primaryCorrelationDictionary != null,
         "CORRELATE_BY column in FUNNELCOUNT aggregation function not supported, please use a dictionary encoded "
@@ -152,11 +152,11 @@ public abstract class AggregationStrategy<A> {
     return primaryCorrelationDictionary;
   }
 
-  private int[] getCorrelationIds(Map<ExpressionContext, BlockValSet> blockValSetMap) {
+  protected int[] getCorrelationIds(Map<ExpressionContext, BlockValSet> blockValSetMap) {
     return blockValSetMap.get(_primaryCorrelationCol).getDictionaryIdsSV();
   }
 
-  private int[][] getSteps(Map<ExpressionContext, BlockValSet> blockValSetMap) {
+  protected int[][] getSteps(Map<ExpressionContext, BlockValSet> blockValSetMap) {
     final int[][] steps = new int[_numSteps][];
     for (int n = 0; n < _numSteps; n++) {
       final BlockValSet stepBlockValSet = blockValSetMap.get(_stepExpressions.get(n));

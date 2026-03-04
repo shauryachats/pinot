@@ -71,6 +71,7 @@ public class FunnelCountAggregationFunction<A, I> implements AggregationFunction
   private final List<ExpressionContext> _expressions;
   private final List<ExpressionContext> _stepExpressions;
   private final List<ExpressionContext> _correlateByExpressions;
+  private final List<ExpressionContext> _holdConstantExpressions;
   private final int _numSteps;
 
   private final AggregationStrategy<A> _aggregationStrategy;
@@ -78,11 +79,13 @@ public class FunnelCountAggregationFunction<A, I> implements AggregationFunction
   private final MergeStrategy<I> _mergeStrategy;
 
   public FunnelCountAggregationFunction(List<ExpressionContext> expressions, List<ExpressionContext> stepExpressions,
-      List<ExpressionContext> correlateByExpressions, AggregationStrategy<A> aggregationStrategy,
-      ResultExtractionStrategy<A, I> resultExtractionStrategy, MergeStrategy<I> mergeStrategy) {
+      List<ExpressionContext> correlateByExpressions, List<ExpressionContext> holdConstantExpressions,
+      AggregationStrategy<A> aggregationStrategy, ResultExtractionStrategy<A, I> resultExtractionStrategy,
+      MergeStrategy<I> mergeStrategy) {
     _expressions = expressions;
     _stepExpressions = stepExpressions;
     _correlateByExpressions = correlateByExpressions;
+    _holdConstantExpressions = holdConstantExpressions;
     _aggregationStrategy = aggregationStrategy;
     _resultExtractionStrategy = resultExtractionStrategy;
     _mergeStrategy = mergeStrategy;
@@ -100,6 +103,7 @@ public class FunnelCountAggregationFunction<A, I> implements AggregationFunction
     final List<ExpressionContext> inputs = new ArrayList<>();
     inputs.addAll(_correlateByExpressions);
     inputs.addAll(_stepExpressions);
+    inputs.addAll(_holdConstantExpressions);
     return inputs;
   }
 

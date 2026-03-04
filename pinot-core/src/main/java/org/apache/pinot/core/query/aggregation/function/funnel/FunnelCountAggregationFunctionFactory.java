@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -63,6 +64,7 @@ public class FunnelCountAggregationFunctionFactory implements Supplier<Aggregati
   final boolean _partitionSetting;
   final boolean _sortingSetting;
   final boolean _thetaSketchSetting;
+  final List<ExpressionContext> _holdConstantExpressions;
   final boolean _setSetting;
 
   public FunnelCountAggregationFunctionFactory(List<ExpressionContext> expressions) {
@@ -71,6 +73,7 @@ public class FunnelCountAggregationFunctionFactory implements Supplier<Aggregati
     _correlateByExpressions = Option.CORRELATE_BY.getInputExpressions(expressions);
     _primaryCorrelationCol = _correlateByExpressions.get(0);
     _stepExpressions = Option.STEPS.getInputExpressions(expressions);
+    _holdConstantExpressions = Option.HOLD_CONSTANT.getOptionalInputExpressions(expressions);
     _numSteps = _stepExpressions.size();
 
     final List<String> settings = Option.SETTINGS.getLiterals(expressions);
@@ -102,6 +105,10 @@ public class FunnelCountAggregationFunctionFactory implements Supplier<Aggregati
         // set && !partitioned && !theta_sketch
         return createFunnelCountAggregationFunction(bitmapAggregationStrategy(), setResultExtractionStrategy(),
             setMergeStrategy());
+      } else if (!_holdConstantExpressions.isEmpty()) {
+        // hold constant with bitmap
+        return createFunnelCountAggregationFunction(holdConstantBitmapAggregationStrategy(),
+            holdConstantBitmapResultExtractionStrategy(), holdConstantBitmapMergeStrategy());
       } else {
         // default (bitmap)
         // !partitioned && !theta_sketch && !set
@@ -115,7 +122,7 @@ public class FunnelCountAggregationFunctionFactory implements Supplier<Aggregati
       AggregationStrategy<A> aggregationStrategy, ResultExtractionStrategy<A, I> resultExtractionStrategy,
       MergeStrategy<I> mergeStrategy) {
     return new FunnelCountAggregationFunction<>(_expressions, _stepExpressions, _correlateByExpressions,
-        aggregationStrategy, resultExtractionStrategy, mergeStrategy);
+        _holdConstantExpressions, aggregationStrategy, resultExtractionStrategy, mergeStrategy);
   }
 
   private <A> FunnelCountAggregationFunction<A, List<Long>> createPartionedFunnelCountAggregationFunction(
@@ -123,10 +130,10 @@ public class FunnelCountAggregationFunctionFactory implements Supplier<Aggregati
       MergeStrategy<List<Long>> mergeStrategy) {
     if (_sortingSetting) {
       return new FunnelCountSortedAggregationFunction<>(_expressions, _stepExpressions, _correlateByExpressions,
-          aggregationStrategy, resultExtractionStrategy, mergeStrategy);
+          _holdConstantExpressions, aggregationStrategy, resultExtractionStrategy, mergeStrategy);
     } else {
       return new FunnelCountAggregationFunction<>(_expressions, _stepExpressions, _correlateByExpressions,
-          aggregationStrategy, resultExtractionStrategy, mergeStrategy);
+          _holdConstantExpressions, aggregationStrategy, resultExtractionStrategy, mergeStrategy);
     }
   }
 
@@ -176,8 +183,22 @@ public class FunnelCountAggregationFunctionFactory implements Supplier<Aggregati
     return sketches -> thetaSketchMergeStrategy.extractFinalResult(Arrays.asList(sketches));
   }
 
+  AggregationStrategy<HoldConstantDictIdsWrapper> holdConstantBitmapAggregationStrategy() {
+    return new HoldConstantBitmapAggregationStrategy(_stepExpressions, _correlateByExpressions,
+        _holdConstantExpressions.get(0));
+  }
+
+  ResultExtractionStrategy<HoldConstantDictIdsWrapper, Map<Object, List<RoaringBitmap>>>
+      holdConstantBitmapResultExtractionStrategy() {
+    return new HoldConstantBitmapResultExtractionStrategy(_numSteps);
+  }
+
+  MergeStrategy<Map<Object, List<RoaringBitmap>>> holdConstantBitmapMergeStrategy() {
+    return new HoldConstantBitmapMergeStrategy(_numSteps);
+  }
+
   enum Option {
-    STEPS("steps"), CORRELATE_BY("correlateby"), SETTINGS("settings");
+    STEPS("steps"), CORRELATE_BY("correlateby"), HOLD_CONSTANT("holdconstant"), SETTINGS("settings");
 
     final String _name;
 
@@ -212,6 +233,11 @@ public class FunnelCountAggregationFunctionFactory implements Supplier<Aggregati
               .orElseThrow(() -> new IllegalArgumentException("FUNNELCOUNT requires " + _name));
       Preconditions.checkArgument(!inputExpressions.isEmpty(), "FUNNELCOUNT: " + _name + " requires an argument.");
       return inputExpressions;
+    }
+
+    public List<ExpressionContext> getOptionalInputExpressions(List<ExpressionContext> expressions) {
+      return this.find(expressions).map(exp -> exp.getFunction().getArguments())
+          .orElseGet(java.util.Collections::emptyList);
     }
 
     public List<String> getLiterals(List<ExpressionContext> expressions) {
